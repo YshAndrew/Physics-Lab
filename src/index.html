@@ -1,0 +1,2606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>力学虚拟实验室 · Physics Lab</title>
+<script src="https://cdn.jsdelivr.net/npm/matter-js@0.20.0/build/matter.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg:         'hsl(215 40% 8%)',
+          surface:    'hsl(215 35% 12%)',
+          surface2:   'hsl(215 30% 16%)',
+          border:     'hsl(215 25% 24%)',
+          text:       'hsl(210 20% 95%)',
+          'text-muted': 'hsl(215 15% 60%)',
+          primary:    'hsl(205 90% 58%)',
+          'primary-soft': 'hsl(205 90% 58% / 0.15)',
+          accent:     'hsl(190 80% 55%)',
+          success:    'hsl(150 60% 50%)',
+          danger:     'hsl(0 70% 58%)',
+          warning:    'hsl(40 80% 55%)',
+        },
+        fontFamily: {
+          sans: ['Inter', 'system-ui', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'monospace'],
+        }
+      }
+    }
+  };
+</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  img, video { max-width: 100%; height: auto; display: block; }
+  body { overflow-wrap: break-word; margin: 0; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: hsl(215 40% 8%);
+    color: hsl(210 20% 95%);
+    font-family: 'Inter', system-ui, sans-serif;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* 面板样式 */
+  .panel {
+    background: hsl(215 35% 12% / 0.92);
+    border: 1px solid hsl(215 25% 24%);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    box-shadow: 0 4px 20px hsl(215 50% 5% / 0.5);
+  }
+
+  .panel-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: hsl(205 80% 70%);
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid hsl(215 25% 22%);
+  }
+
+  /* 工具按钮 */
+  .tool-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: hsl(215 30% 16%);
+    border: 1px solid hsl(215 25% 24%);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    color: hsl(215 15% 75%);
+    font-size: 13px;
+    font-weight: 500;
+    text-align: left;
+    width: 100%;
+  }
+  .tool-btn:hover {
+    background: hsl(215 28% 20%);
+    border-color: hsl(205 70% 50%);
+    color: hsl(210 20% 95%);
+  }
+  .tool-btn.active {
+    background: hsl(205 90% 58% / 0.15);
+    border-color: hsl(205 90% 58%);
+    color: hsl(205 90% 75%);
+    box-shadow: 0 0 0 2px hsl(205 90% 58% / 0.2);
+  }
+  .tool-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .tool-btn .shortcut {
+    margin-left: auto;
+    font-size: 10px;
+    color: hsl(215 15% 50%);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* 控制按钮 */
+  .ctrl-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 18px;
+    background: hsl(215 30% 16%);
+    border: 1px solid hsl(215 25% 24%);
+    border-radius: 8px;
+    color: hsl(210 20% 90%);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .ctrl-btn:hover {
+    background: hsl(215 28% 22%);
+    border-color: hsl(205 70% 50%);
+    transform: translateY(-1px);
+  }
+  .ctrl-btn:active {
+    transform: translateY(0);
+  }
+  .ctrl-btn.primary {
+    background: hsl(205 90% 58%);
+    border-color: hsl(205 90% 58%);
+    color: white;
+  }
+  .ctrl-btn.primary:hover {
+    background: hsl(205 90% 65%);
+    box-shadow: 0 2px 12px hsl(205 90% 58% / 0.4);
+  }
+  .ctrl-btn.danger {
+    border-color: hsl(0 60% 45%);
+    color: hsl(0 80% 75%);
+  }
+  .ctrl-btn.danger:hover {
+    background: hsl(0 60% 30% / 0.3);
+  }
+  .ctrl-btn.icon-only {
+    padding: 8px;
+    width: 36px;
+    height: 36px;
+  }
+  .ctrl-btn svg { width: 16px; height: 16px; }
+
+  /* 滑块 */
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: hsl(215 25% 22%);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: hsl(205 90% 60%);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 0 3px hsl(205 90% 58% / 0.2);
+    transition: box-shadow 0.15s;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover {
+    box-shadow: 0 0 0 5px hsl(205 90% 58% / 0.25);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: hsl(205 90% 60%);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+  }
+
+  /* 数字输入 */
+  input[type="number"] {
+    background: hsl(215 35% 10%);
+    border: 1px solid hsl(215 25% 28%);
+    color: hsl(210 20% 92%);
+    padding: 5px 8px;
+    border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    width: 70px;
+    text-align: right;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input[type="number"]:focus {
+    border-color: hsl(205 90% 58%);
+  }
+
+  /* 标签 */
+  .label-sm {
+    font-size: 11px;
+    color: hsl(215 15% 60%);
+    font-weight: 500;
+  }
+  .value-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: hsl(205 80% 75%);
+  }
+
+  /* 开关 */
+  .switch {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    background: hsl(215 25% 22%);
+    border-radius: 10px;
+    cursor: pointer;
+    border: 1px solid hsl(215 25% 28%);
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    background: hsl(215 15% 55%);
+    border-radius: 50%;
+    transition: all 0.2s;
+  }
+  .switch.on {
+    background: hsl(205 90% 58% / 0.25);
+    border-color: hsl(205 90% 58%);
+  }
+  .switch.on::after {
+    left: 18px;
+    background: hsl(205 90% 65%);
+    box-shadow: 0 0 6px hsl(205 90% 58% / 0.6);
+  }
+
+  /* 画布 */
+  #canvas-wrap {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    cursor: grab;
+  }
+  #canvas-wrap.panning { cursor: grabbing; }
+  #canvas-wrap.select-tool { cursor: default; }
+  #canvas-wrap.create-tool { cursor: crosshair; }
+  #canvas {
+    display: block;
+  }
+
+  /* 右键菜单 */
+  #context-menu {
+    position: fixed;
+    z-index: 1000;
+    min-width: 160px;
+    display: none;
+  }
+  .ctx-item {
+    padding: 8px 14px;
+    font-size: 13px;
+    color: hsl(215 15% 80%);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 6px;
+    margin: 2px 4px;
+  }
+  .ctx-item:hover {
+    background: hsl(205 90% 58% / 0.15);
+    color: hsl(205 90% 80%);
+  }
+  .ctx-item.danger { color: hsl(0 70% 65%); }
+  .ctx-item.danger:hover { background: hsl(0 70% 50% / 0.15); }
+  .ctx-sep {
+    height: 1px;
+    background: hsl(215 25% 22%);
+    margin: 4px 8px;
+  }
+
+  /* 小地图 */
+  #minimap {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    width: 180px;
+    height: 120px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid hsl(215 25% 28%);
+    background: hsl(215 40% 6% / 0.9);
+    cursor: pointer;
+  }
+  #minimap canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* 缩放指示器 */
+  .zoom-indicator {
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  /* 滚动条 */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: hsl(215 25% 28%); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(215 25% 38%); }
+
+  /* 属性面板动画 */
+  .prop-panel {
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .prop-panel.hidden-panel {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(10px);
+  }
+
+  /* 工具分类标题 */
+  .tool-category {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: hsl(215 15% 45%);
+    font-weight: 600;
+    padding: 4px 2px;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<!-- 画布容器 -->
+<div id="canvas-wrap">
+  <canvas id="canvas"></canvas>
+
+  <!-- 左上角：播放控制 -->
+  <div class="absolute top-4 left-4 panel p-3 flex items-center gap-2 z-10">
+    <button id="btn-play" class="ctrl-btn primary" title="播放 (空格)">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      <span>播放</span>
+    </button>
+    <button id="btn-pause" class="ctrl-btn" title="暂停 (空格)">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>
+      <span>暂停</span>
+    </button>
+    <button id="btn-reset" class="ctrl-btn" title="重置">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>
+      </svg>
+      <span>重置</span>
+    </button>
+    <div class="w-px h-6 bg-border"></div>
+    <button id="btn-help" class="ctrl-btn icon-only" title="帮助">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- 帮助弹窗 -->
+  <div id="help-modal" class="fixed inset-0 z-50 flex items-center justify-center" style="display:none;background:hsla(215,40%,4%,0.7);backdrop-filter:blur(4px);">
+    <div class="panel p-6 max-w-lg w-full mx-4 max-h-[85vh] overflow-y-auto" style="background:hsl(215,35%,12%,0.96);">
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="panel-title !mb-0 !pb-0 !border-0 text-base">📖 力学虚拟实验室 · 说明书</h2>
+        <button id="btn-help-close" class="ctrl-btn icon-only" style="background:transparent;border:none;color:hsl(215,15%,60%);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="space-y-4 text-sm leading-relaxed" style="color:hsl(210,15%,85%);">
+        <div>
+          <h3 class="font-semibold mb-1" style="color:hsl(205,80%,70%);">🎯 操作方式</h3>
+          <ul class="space-y-1.5 pl-4 list-disc">
+            <li><b>选择/拖拽 (V)</b>：点击物体选中，拖拽移动</li>
+            <li><b>平移视图</b>：按住空格 + 鼠标拖拽，或鼠标中键拖拽</li>
+            <li><b>缩放</b>：滚轮，或 + / - 键</li>
+            <li><b>删除</b>：按 Delete 键，或选择删除工具点击物体</li>
+            <li><b>创建物体</b>：点击左侧工具栏的物体类型，在画布上拖拽</li>
+            <li><b>创建约束</b>：先点击一个物体起点，拖拽到第二个物体释放</li>
+            <li><b>右键菜单</b>：在物体上右键可复制/删除/切换静态</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="font-semibold mb-1" style="color:hsl(205,80%,70%);">🔧 快捷键</h3>
+          <div class="grid grid-cols-2 gap-x-4 gap-y-1 pl-4">
+            <span>V 选择 / B 方块</span><span>C 圆球 / R 斜面</span>
+            <span>P 平台 / S 弹簧</span><span>H 杆 / K 绳索</span>
+            <span>空格 播放/暂停</span><span>Esc 取消/选择</span>
+            <span>0 重置视图</span><span>+ / - 缩放</span>
+          </div>
+        </div>
+        <div>
+          <h3 class="font-semibold mb-1" style="color:hsl(205,80%,70%);">📐 受力箭头说明</h3>
+          <div class="space-y-1 pl-4">
+            <p><span style="color:hsl(0,80%,60%);">● G（重力）</span>：竖直向下，G = mg</p>
+            <p><span style="color:hsl(205,80%,65%);">● N（支持力）</span>：垂直于接触面，指向被支持物体</p>
+            <p><span style="color:hsl(150,60%,55%);">● f（摩擦力）</span>：沿接触面，与相对滑动方向相反</p>
+            <p><span style="color:hsl(280,70%,70%);">● F弹（弹簧弹力）</span>：沿弹簧方向，拉长时向内收缩</p>
+            <p><span style="color:hsl(45,85%,60%);">● T（约束力）</span>：沿杆/绳索方向</p>
+            <p><span style="color:hsl(190,50%,55%);">● D（空气阻力）</span>：与速度方向相反（默认关闭）</p>
+          </div>
+          <p class="mt-2 text-xs" style="color:hsl(215,15%,55%);">可在底部栏开关各类力的显示。</p>
+        </div>
+        <div class="pt-2 border-t" style="border-color:hsl(215,25%,22%);">
+          <p class="text-xs" style="color:hsl(215,15%,55%);">开发者：<span style="color:hsl(205,80%,70%);">AndrewYin</span> · 物理引擎：Matter.js</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 左下角：创建工具栏（可折叠、可拖动） -->
+  <div id="panel-create" class="absolute left-4 bottom-4 panel p-0 w-52 z-10 max-h-[70vh] overflow-hidden" style="resize:none;">
+    <div id="panel-create-header" class="flex items-center justify-between px-3 py-2 cursor-grab select-none" style="border-bottom:1px solid hsl(215 25% 22%);">
+      <span class="panel-title !mb-0 !pb-0 !border-0">创建物体</span>
+      <button id="btn-collapse-create" class="ctrl-btn icon-only !w-6 !h-6 !p-0 !min-w-0" style="background:transparent;border:none;color:hsl(215 15% 50%);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <path d="M18 15l-6-6-6 6"/>
+        </svg>
+      </button>
+    </div>
+    <div id="panel-create-body" class="p-3 overflow-y-auto max-h-[60vh]">
+
+    <div class="tool-category">几何体</div>
+    <div class="space-y-1.5 mb-2">
+      <button class="tool-btn" data-tool="box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="4" y="4" width="16" height="16" rx="2"/>
+        </svg>
+        <span>方块</span>
+        <span class="shortcut">B</span>
+      </button>
+      <button class="tool-btn" data-tool="circle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="8"/>
+        </svg>
+        <span>圆球</span>
+        <span class="shortcut">C</span>
+      </button>
+      <button class="tool-btn" data-tool="ramp">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 20L20 20L4 8Z"/>
+        </svg>
+        <span>斜面</span>
+        <span class="shortcut">R</span>
+      </button>
+      <button class="tool-btn" data-tool="platform">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="10" width="20" height="4" rx="1"/>
+          <line x1="5" y1="14" x2="5" y2="18" stroke-dasharray="2"/>
+          <line x1="19" y1="14" x2="19" y2="18" stroke-dasharray="2"/>
+        </svg>
+        <span>静态平台</span>
+        <span class="shortcut">P</span>
+      </button>
+    </div>
+
+    <div class="tool-category">约束</div>
+    <div class="space-y-1.5 mb-2">
+      <button class="tool-btn" data-tool="spring">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 12 L7 6 L10 18 L13 6 L16 18 L19 6 L20 12" stroke-linecap="round"/>
+        </svg>
+        <span>弹簧</span>
+        <span class="shortcut">S</span>
+      </button>
+      <button class="tool-btn" data-tool="rod">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="4" y1="20" x2="20" y2="4"/>
+          <circle cx="4" cy="20" r="2" fill="currentColor"/>
+          <circle cx="20" cy="4" r="2" fill="currentColor"/>
+        </svg>
+        <span>杆</span>
+        <span class="shortcut">H</span>
+      </button>
+      <button class="tool-btn" data-tool="ropechain">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M12 2 C 8 8, 16 10, 12 16 C 8 22, 16 20, 12 22"/>
+        </svg>
+        <span>绳索</span>
+        <span class="shortcut">K</span>
+      </button>
+    </div>
+
+    <div class="tool-category">工具</div>
+    <div class="space-y-1.5">
+      <button class="tool-btn active" data-tool="select">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 4L11 20L13 13L20 11L4 4Z"/>
+        </svg>
+        <span>选择/拖拽</span>
+        <span class="shortcut">V</span>
+      </button>
+      <button class="tool-btn" data-tool="delete">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0l-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/>
+        </svg>
+        <span>删除</span>
+        <span class="shortcut">Del</span>
+      </button>
+    </div>
+
+    </div>
+  </div>
+
+  <!-- 右上角：视图控制 -->
+  <div class="absolute top-4 right-4 panel p-2 flex items-center gap-1 z-10">
+    <button id="btn-zoom-in" class="ctrl-btn icon-only" title="放大 (+)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+      </svg>
+    </button>
+    <div class="zoom-indicator !static !p-0 !border-0 !bg-transparent mx-1">
+      <span id="zoom-val">100%</span>
+    </div>
+    <button id="btn-zoom-out" class="ctrl-btn icon-only" title="缩小 (-)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/>
+      </svg>
+    </button>
+    <div class="w-px h-6 bg-border mx-1"></div>
+    <button id="btn-reset-view" class="ctrl-btn icon-only" title="重置视图 (0)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M21 12a9 9 0 1 0-3 6.7L21 16"/><path d="M21 21v-5h-5"/>
+      </svg>
+    </button>
+    <button id="btn-toggle-grid" class="ctrl-btn icon-only" title="网格">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/>
+        <line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/>
+      </svg>
+    </button>
+    <button id="btn-toggle-forces" class="ctrl-btn icon-only" title="受力箭头">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 19V5M5 12l7-7 7 7"/>
+        <line x1="5" y1="19" x2="19" y2="19"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- 右下角：属性面板（选中时显示，可折叠、可拖动） -->
+  <div id="prop-panel" class="absolute right-4 bottom-[150px] panel p-0 w-64 prop-panel hidden-panel z-10 overflow-hidden">
+    <div id="prop-panel-header" class="flex items-center justify-between px-3 py-2 cursor-grab select-none" style="border-bottom:1px solid hsl(215 25% 22%);">
+      <span class="panel-title !mb-0 !pb-0 !border-0">物体属性</span>
+      <button id="btn-collapse-prop" class="ctrl-btn icon-only !w-6 !h-6 !p-0 !min-w-0" style="background:transparent;border:none;color:hsl(215 15% 50%);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <path d="M18 15l-6-6-6 6"/>
+        </svg>
+      </button>
+    </div>
+    <div id="prop-panel-body" class="p-3 space-y-3">
+      <div class="flex justify-between items-center">
+        <span class="label-sm">类型</span>
+        <span id="prop-type" class="value-mono">—</span>
+      </div>
+
+      <div class="h-px bg-border/60"></div>
+
+      <div>
+        <div class="flex justify-between items-center mb-1.5">
+          <span class="label-sm">质量</span>
+          <input type="number" id="prop-mass" step="0.1" min="0.1">
+        </div>
+        <input type="range" id="prop-mass-range" min="0.1" max="50" step="0.1" value="1">
+      </div>
+
+      <div>
+        <div class="flex justify-between items-center mb-1.5">
+          <span class="label-sm">摩擦系数</span>
+          <input type="number" id="prop-friction" step="0.01" min="0" max="2">
+        </div>
+        <input type="range" id="prop-friction-range" min="0" max="1" step="0.01" value="0.1">
+      </div>
+
+      <div>
+        <div class="flex justify-between items-center mb-1.5">
+          <span class="label-sm">弹性系数</span>
+          <input type="number" id="prop-restitution" step="0.01" min="0" max="1">
+        </div>
+        <input type="range" id="prop-restitution-range" min="0" max="1" step="0.01" value="0.3">
+      </div>
+
+      <div class="h-px bg-border/60"></div>
+
+      <div class="flex justify-between items-center">
+        <span class="label-sm">静态物体</span>
+        <div id="prop-static" class="switch"></div>
+      </div>
+
+      <div class="flex justify-between items-center">
+        <span class="label-sm">显示受力</span>
+        <div id="prop-show-forces" class="switch on"></div>
+      </div>
+
+      <div class="h-px bg-border/60"></div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <button id="btn-duplicate" class="ctrl-btn text-xs" style="padding:8px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+            <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          复制
+        </button>
+        <button id="btn-delete-prop" class="ctrl-btn danger text-xs" style="padding:8px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+            <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0l-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/>
+          </svg>
+          删除
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部中间：全局设置 -->
+  <div class="absolute bottom-4 left-1/2 -translate-x-1/2 panel p-3 z-10">
+    <div class="flex items-center gap-4 px-2">
+      <div class="flex items-center gap-3 w-56">
+        <span class="label-sm whitespace-nowrap">重力</span>
+        <input type="range" id="gravity-slider" min="0" max="30" step="0.1" value="9.81">
+        <span id="gravity-val" class="value-mono whitespace-nowrap w-14 text-right">9.81 m/s²</span>
+      </div>
+      <div class="w-px h-8 bg-border"></div>
+      <div class="flex items-center gap-3 w-52">
+        <span class="label-sm whitespace-nowrap">时间流速</span>
+        <input type="range" id="timescale-slider" min="0.1" max="3" step="0.1" value="1">
+        <span id="timescale-val" class="value-mono whitespace-nowrap w-10 text-right">1.0x</span>
+      </div>
+      <div class="w-px h-8 bg-border"></div>
+      <div class="flex items-center gap-2">
+        <span class="label-sm">FPS</span>
+        <span id="fps-val" class="value-mono">60</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="label-sm">物体</span>
+        <span id="body-count" class="value-mono">0</span>
+      </div>
+      <div class="w-px h-8 bg-border"></div>
+      <!-- 受力类型过滤开关 -->
+      <div class="flex items-center gap-2" id="force-filter-bar"></div>
+    </div>
+  </div>
+
+  <!-- 小地图 -->
+  <div id="minimap" class="z-10">
+    <canvas id="minimap-canvas"></canvas>
+  </div>
+
+  <!-- 右键菜单 -->
+  <div id="context-menu" class="panel p-1 z-50">
+    <div class="ctx-item" data-action="duplicate">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+        <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+      </svg>
+      复制物体
+    </div>
+    <div class="ctx-item" data-action="toggle-static">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+        <rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      切换静态
+    </div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item danger" data-action="delete">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+        <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0l-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/>
+      </svg>
+      删除物体
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  力学虚拟实验室 - 核心逻辑
+// ============================================================
+
+const { Engine, World, Bodies, Body, Constraint, Composite,
+        Vector, Vertices, Common } = Matter;
+
+// --- 全局状态 ---
+const state = {
+  engine: null,
+  canvas: null,
+  ctx: null,
+  minimapCanvas: null,
+  minimapCtx: null,
+  width: 0,
+  height: 0,
+
+  // 相机
+  camera: { x: 0, y: 0, zoom: 1 },
+  isPanning: false,
+  panStart: { x: 0, y: 0 },
+  cameraStart: { x: 0, y: 0 },
+  spacePressed: false,
+
+  // 运行状态
+  running: false,
+  timeScale: 1,
+
+  // 工具
+  currentTool: 'select',
+  showForces: true,
+  forceFilters: { gravity: true, normal: true, friction: true, tension: true, airResistance: false },
+  showGrid: true,
+  gridSize: 40, // 世界坐标单位
+
+  // 选中
+  selectedBody: null,
+  hoverBody: null,
+
+  // 拖拽物体
+  draggingBody: null,
+  dragOffset: { x: 0, y: 0 },
+  dragStartPos: { x: 0, y: 0 },
+  hasMoved: false,
+  dragPrevTarget: { x: 0, y: 0 },
+  dragVelocity: null,
+
+  // 创建模式（拖拽创建）
+  createStart: null,
+  createPreview: null,
+
+  // 约束创建
+  constraintBodyA: null,
+
+  // FPS
+  fps: 60,
+  frameCount: 0,
+  lastFpsTime: 0,
+
+  // 初始状态
+  initialState: null,
+};
+
+// --- 颜色 ---
+const COLORS = {
+  gridMinor: 'hsla(215, 30%, 40%, 0.12)',
+  gridMajor: 'hsla(215, 40%, 55%, 0.2)',
+  bodyFill: 'hsla(215, 50%, 25%, 0.7)',
+  bodyStroke: 'hsl(205, 80%, 60%)',
+  bodyGlow: 'hsla(205, 80%, 60%, 0.3)',
+  staticFill: 'hsla(215, 25%, 20%, 0.9)',
+  staticStroke: 'hsl(215, 20%, 55%)',
+  selectedStroke: 'hsl(45, 90%, 60%)',
+  selectedGlow: 'hsla(45, 90%, 60%, 0.5)',
+  hoverStroke: 'hsl(205, 90%, 75%)',
+  gravity: 'hsl(0, 80%, 60%)',
+  normal: 'hsl(205, 80%, 65%)',
+  friction: 'hsl(150, 60%, 55%)',
+  spring: 'hsl(280, 70%, 70%)',
+  tension: 'hsl(45, 85%, 60%)',
+  airResistance: 'hsl(190, 50%, 55%)',
+};
+
+// 受力类型元数据
+const FORCE_TYPES = {
+  gravity: { label: '重力', color: COLORS.gravity, defaultOn: true },
+  normal: { label: '支持力', color: COLORS.normal, defaultOn: true },
+  friction: { label: '摩擦力', color: COLORS.friction, defaultOn: true },
+  tension: { label: '约束力', color: COLORS.tension, defaultOn: true },
+  airResistance: { label: '空气阻力', color: COLORS.airResistance, defaultOn: false },
+};
+
+// ============================================================
+//  初始化
+// ============================================================
+function init() {
+  state.canvas = document.getElementById('canvas');
+  state.ctx = state.canvas.getContext('2d');
+  state.minimapCanvas = document.getElementById('minimap-canvas');
+  state.minimapCtx = state.minimapCanvas.getContext('2d');
+
+  // 引擎 - 使用适中迭代次数，过高会导致抖动
+  state.engine = Engine.create();
+  state.engine.gravity.y = 1;
+  state.engine.positionIterations = 10;
+  state.engine.velocityIterations = 8;
+  state.engine.constraintIterations = 2;
+
+  // 画布尺寸
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  // 相机初始居中
+  state.camera.x = state.width / 2;
+  state.camera.y = state.height / 2;
+
+  // 交互
+  setupInteraction();
+  setupPanelDrag();
+  setupUI();
+  setupKeyboard();
+
+  // 初始场景
+  createDemoScene();
+  saveInitialState();
+
+  // 启动
+  state.running = true;
+  state.lastFpsTime = performance.now();
+  requestAnimationFrame(loop);
+
+  // 可见性暂停
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      state._wasRunning = state.running;
+      state.running = false;
+    } else if (state._wasRunning) {
+      state.running = true;
+      state.lastFpsTime = performance.now();
+      requestAnimationFrame(loop);
+    }
+  });
+}
+
+function resizeCanvas() {
+  const wrap = document.getElementById('canvas-wrap');
+  const dpr = window.devicePixelRatio || 1;
+  state.width = wrap.clientWidth;
+  state.height = wrap.clientHeight;
+
+  state.canvas.width = state.width * dpr;
+  state.canvas.height = state.height * dpr;
+  state.canvas.style.width = state.width + 'px';
+  state.canvas.style.height = state.height + 'px';
+  state.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // 小地图
+  const mm = document.getElementById('minimap');
+  state.minimapCanvas.width = mm.clientWidth * dpr;
+  state.minimapCanvas.height = mm.clientHeight * dpr;
+  state.minimapCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+// ============================================================
+//  坐标转换
+// ============================================================
+function screenToWorld(sx, sy) {
+  return {
+    x: (sx - state.camera.x) / state.camera.zoom,
+    y: (sy - state.camera.y) / state.camera.zoom
+  };
+}
+
+function worldToScreen(wx, wy) {
+  return {
+    x: wx * state.camera.zoom + state.camera.x,
+    y: wy * state.camera.zoom + state.camera.y
+  };
+}
+
+function applyCameraTransform(ctx) {
+  ctx.translate(state.camera.x, state.camera.y);
+  ctx.scale(state.camera.zoom, state.camera.zoom);
+}
+
+// ============================================================
+//  交互系统
+// ============================================================
+function setupInteraction() {
+  const canvas = state.canvas;
+  const wrap = document.getElementById('canvas-wrap');
+
+  // 获取鼠标相对 canvas 的位置
+  function getMousePos(e) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+  }
+
+  // 鼠标按下
+  canvas.addEventListener('mousedown', (e) => {
+    const screenPos = getMousePos(e);
+    const worldPos = screenToWorld(screenPos.x, screenPos.y);
+
+    // 中键：平移
+    if (e.button === 1 || (e.button === 0 && state.spacePressed)) {
+      e.preventDefault();
+      state.isPanning = true;
+      state.panStart = screenPos;
+      state.cameraStart = { x: state.camera.x, y: state.camera.y };
+      wrap.classList.add('panning');
+      return;
+    }
+
+    // 左键
+    if (e.button === 0) {
+      // 隐藏右键菜单
+      document.getElementById('context-menu').style.display = 'none';
+
+      if (state.currentTool === 'select') {
+        // 选择/拖拽
+        const body = getBodyAtWorld(worldPos.x, worldPos.y);
+        if (body) {
+          selectBody(body);
+          state.draggingBody = body;
+          state.dragOffset = {
+            x: worldPos.x - body.position.x,
+            y: worldPos.y - body.position.y
+          };
+          state.dragStartPos = { ...worldPos };
+          state.dragTarget = { x: body.position.x, y: body.position.y };
+          state.dragPrevTarget = { ...state.dragTarget };
+          state.hasMoved = false;
+        } else {
+          deselectBody();
+        }
+      } else if (state.currentTool === 'delete') {
+        const body = getBodyAtWorld(worldPos.x, worldPos.y);
+        if (body) removeBody(body);
+      } else if (['box', 'circle', 'ramp', 'platform'].includes(state.currentTool)) {
+        state.createStart = worldPos;
+        state.createPreview = { type: state.currentTool, start: worldPos, end: worldPos };
+      } else if (['spring', 'rod', 'ropechain'].includes(state.currentTool)) {
+        const body = getBodyAtWorld(worldPos.x, worldPos.y);
+        if (body) {
+          state.constraintBodyA = body;
+          state.createStart = worldPos;
+          if (state.currentTool === 'ropechain') {
+            // 绳索链：从起点创建一系列小方块
+            state.createPreview = { type: 'ropechain', start: worldPos, end: worldPos, bodies: [] };
+          } else {
+            state.createPreview = { type: state.currentTool, start: worldPos, end: worldPos };
+          }
+        }
+      }
+    }
+  });
+
+  // 鼠标移动
+  canvas.addEventListener('mousemove', (e) => {
+    const screenPos = getMousePos(e);
+    const worldPos = screenToWorld(screenPos.x, screenPos.y);
+
+    // 平移
+    if (state.isPanning) {
+      state.camera.x = state.cameraStart.x + (screenPos.x - state.panStart.x);
+      state.camera.y = state.cameraStart.y + (screenPos.y - state.panStart.y);
+      return;
+    }
+
+    // 拖拽物体：更新目标位置
+    if (state.draggingBody) {
+      state.dragPrevTarget = state.dragTarget
+        ? { ...state.dragTarget }
+        : { x: worldPos.x - state.dragOffset.x, y: worldPos.y - state.dragOffset.y };
+      state.dragTarget = {
+        x: worldPos.x - state.dragOffset.x,
+        y: worldPos.y - state.dragOffset.y
+      };
+      // 记录拖拽速度（用于释放时的惯性传递）
+      const dt = 1/60;
+      state.dragVelocity = {
+        x: (state.dragTarget.x - (state.dragPrevTarget ? state.dragPrevTarget.x : state.dragTarget.x)) / dt,
+        y: (state.dragTarget.y - (state.dragPrevTarget ? state.dragPrevTarget.y : state.dragTarget.y)) / dt
+      };
+      const dist = Math.hypot(
+        state.dragTarget.x - state.dragStartPos.x,
+        state.dragTarget.y - state.dragStartPos.y
+      );
+      if (dist > 2) state.hasMoved = true;
+      return;
+    }
+
+    // 创建预览
+    if (state.createStart && state.createPreview) {
+      state.createPreview.end = worldPos;
+    }
+
+    // 悬停检测（仅选择模式）
+    if (state.currentTool === 'select' && !state.draggingBody) {
+      const body = getBodyAtWorld(worldPos.x, worldPos.y);
+      state.hoverBody = body;
+      wrap.style.cursor = body ? 'grab' : 'default';
+    }
+  });
+
+  // 鼠标松开
+  canvas.addEventListener('mouseup', (e) => {
+    const screenPos = getMousePos(e);
+    const worldPos = screenToWorld(screenPos.x, screenPos.y);
+
+    if (state.isPanning) {
+      state.isPanning = false;
+      wrap.classList.remove('panning');
+      return;
+    }
+
+    if (state.draggingBody) {
+      // 释放时不设置速度，让物理自然延续
+      state.draggingBody = null;
+      state.dragTarget = null;
+      state.dragVelocity = null;
+      return;
+    }
+
+    if (state.createStart && state.createPreview) {
+      finishCreate(worldPos);
+    }
+  });
+
+  // 鼠标离开
+  canvas.addEventListener('mouseleave', () => {
+    state.isPanning = false;
+    state.draggingBody = null;
+    state.hoverBody = null;
+    wrap.classList.remove('panning');
+  });
+
+  // 滚轮缩放
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const screenPos = getMousePos(e);
+    const worldPosBefore = screenToWorld(screenPos.x, screenPos.y);
+
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    let newZoom = state.camera.zoom * delta;
+    newZoom = Math.max(0.2, Math.min(5, newZoom));
+    state.camera.zoom = newZoom;
+
+    // 保持鼠标下的世界点不变
+    const worldPosAfter = screenToWorld(screenPos.x, screenPos.y);
+    state.camera.x += (worldPosAfter.x - worldPosBefore.x) * newZoom;
+    state.camera.y += (worldPosAfter.y - worldPosBefore.y) * newZoom;
+
+    updateZoomDisplay();
+  }, { passive: false });
+
+  // 右键菜单
+  canvas.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    const screenPos = getMousePos(e);
+    const worldPos = screenToWorld(screenPos.x, screenPos.y);
+    const body = getBodyAtWorld(worldPos.x, worldPos.y);
+
+    if (body) {
+      selectBody(body);
+      const menu = document.getElementById('context-menu');
+      menu.style.left = e.clientX + 'px';
+      menu.style.top = e.clientY + 'px';
+      menu.style.display = 'block';
+    }
+  });
+
+  // 点击其他地方关闭右键菜单
+  document.addEventListener('mousedown', (e) => {
+    if (!e.target.closest('#context-menu')) {
+      document.getElementById('context-menu').style.display = 'none';
+    }
+  });
+}
+
+// ============================================================
+//  面板拖动 & 折叠 + 小地图拖动
+// ============================================================
+function setupPanelDrag() {
+  // 通用面板拖拽
+  function makeDraggable(panelId, headerId) {
+    const panel = document.getElementById(panelId);
+    const header = document.getElementById(headerId);
+    let isDragging = false;
+    let dragOffset = { x: 0, y: 0 };
+
+    header.addEventListener('mousedown', (e) => {
+      if (e.target.closest('button')) return; // 不拦截按钮
+      isDragging = true;
+      const rect = panel.getBoundingClientRect();
+      dragOffset.x = e.clientX - rect.left;
+      dragOffset.y = e.clientY - rect.top;
+      panel.style.transition = 'none';
+      panel.style.position = 'fixed';
+      // 保持原有 left/bottom 转为 left/top
+      const parentRect = document.getElementById('canvas-wrap').getBoundingClientRect();
+      panel.style.left = (rect.left - parentRect.left) + 'px';
+      panel.style.top = (rect.top - parentRect.top) + 'px';
+      panel.style.bottom = 'auto';
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const parentRect = document.getElementById('canvas-wrap').getBoundingClientRect();
+      panel.style.left = (e.clientX - parentRect.left - dragOffset.x) + 'px';
+      panel.style.top = (e.clientY - parentRect.top - dragOffset.y) + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        panel.style.transition = '';
+      }
+    });
+  }
+
+  function makeCollapsible(panelId, bodyId, btnId) {
+    const body = document.getElementById(bodyId);
+    const btn = document.getElementById(btnId);
+    let collapsed = false;
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      collapsed = !collapsed;
+      body.style.display = collapsed ? 'none' : '';
+      btn.querySelector('svg').style.transform = collapsed ? 'rotate(-90deg)' : '';
+      btn.querySelector('svg').style.transition = 'transform 0.2s';
+    });
+  }
+
+  makeDraggable('panel-create', 'panel-create-header');
+  makeDraggable('prop-panel', 'prop-panel-header');
+  makeCollapsible('panel-create', 'panel-create-body', 'btn-collapse-create');
+  makeCollapsible('prop-panel', 'prop-panel-body', 'btn-collapse-prop');
+
+  // 小地图拖动
+  const minimap = document.getElementById('minimap');
+  let mmDragging = false;
+  let mmDragOffset = { x: 0, y: 0 };
+
+  minimap.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    mmDragging = true;
+    const rect = minimap.getBoundingClientRect();
+    const parentRect = document.getElementById('canvas-wrap').getBoundingClientRect();
+    mmDragOffset.x = e.clientX - rect.left;
+    mmDragOffset.y = e.clientY - rect.top;
+    minimap.style.transition = 'none';
+    minimap.style.position = 'fixed';
+    minimap.style.left = (rect.left - parentRect.left) + 'px';
+    minimap.style.top = (rect.top - parentRect.top) + 'px';
+    minimap.style.right = 'auto';
+    minimap.style.bottom = 'auto';
+    e.stopPropagation();
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!mmDragging) return;
+    const parentRect = document.getElementById('canvas-wrap').getBoundingClientRect();
+    minimap.style.left = (e.clientX - parentRect.left - mmDragOffset.x) + 'px';
+    minimap.style.top = (e.clientY - parentRect.top - mmDragOffset.y) + 'px';
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (mmDragging) {
+      mmDragging = false;
+      minimap.style.transition = '';
+    }
+  });
+}
+
+// ============================================================
+//  物体拾取
+// ============================================================
+function getBodyAtWorld(wx, wy) {
+  const bodies = Composite.allBodies(state.engine.world);
+  const point = { x: wx, y: wy };
+  // 从后往前（上层优先）
+  for (let i = bodies.length - 1; i >= 0; i--) {
+    const b = bodies[i];
+    if (b.isSensor) continue;
+    if (Matter.Bounds.contains(b.bounds, point) &&
+        Matter.Vertices.contains(b.vertices, point)) {
+      return b;
+    }
+  }
+  return null;
+}
+
+// ============================================================
+//  创建物体
+// ============================================================
+function finishCreate(worldPos) {
+  const preview = state.createPreview;
+  if (!preview) return;
+
+  const start = preview.start;
+  const end = worldPos;
+
+  if (['box', 'circle', 'ramp', 'platform'].includes(preview.type)) {
+    const cx = (start.x + end.x) / 2;
+    const cy = (start.y + end.y) / 2;
+    let w = Math.abs(end.x - start.x);
+    let h = Math.abs(end.y - start.y);
+
+    // 太小的话用默认尺寸（点击创建）
+    const isClick = w < 10 && h < 10;
+    if (isClick) { w = 60; h = 60; }
+
+    let body;
+    const isStatic = preview.type === 'platform';
+
+    if (preview.type === 'box' || preview.type === 'platform') {
+      if (isStatic && isClick) { w = 200; h = 20; }
+      body = Bodies.rectangle(cx, cy, w, h, {
+        isStatic,
+        friction: 0.2,
+        restitution: 0.15,
+        density: 0.001,
+        label: isStatic ? 'platform' : 'box',
+      });
+    } else if (preview.type === 'circle') {
+      const r = isClick ? 25 : Math.min(w, h) / 2;
+      body = Bodies.circle(cx, cy, r, {
+        friction: 0.08,
+        restitution: 0.4,
+        density: 0.001,
+        label: 'circle',
+      });
+    } else if (preview.type === 'ramp') {
+      if (isClick) { w = 200; h = 80; }
+      // 直角三角形斜面：根据拖拽方向决定斜坡朝向
+      // start 是鼠标按下点，end 是释放点
+      // 从 start.x 到 end.x 的方向决定斜面朝向
+      const isLeftRamp = end.x >= start.x; // 从左上向右下滑 = 标准左斜面
+      let vertices;
+      if (isLeftRamp) {
+        // 左斜面：斜边从左下到右上（标准）
+        vertices = [
+          { x: -w/2, y: h/2 },   // 左下
+          { x: w/2, y: h/2 },    // 右下（直角）
+          { x: -w/2, y: -h/2 },  // 左上（尖角）
+        ];
+      } else {
+        // 右斜面：斜边从右下到左上（镜像）
+        vertices = [
+          { x: -w/2, y: h/2 },   // 左下（直角）
+          { x: w/2, y: h/2 },    // 右下
+          { x: w/2, y: -h/2 },   // 右上（尖角）
+        ];
+      }
+      body = Bodies.fromVertices(cx, cy, vertices, {
+        isStatic: true,
+        friction: 0.3,
+        restitution: 0.1,
+        density: 0.001,
+        label: 'ramp',
+      });
+      if (body) {
+        body.restitution = 0.1;
+        body.friction = 0.3;
+        body.frictionStatic = 0.5;
+      }
+    }
+
+    if (body) {
+      World.add(state.engine.world, body);
+      selectBody(body);
+      updateCounts();
+    }
+  } else if (preview.type === 'spring' || preview.type === 'rod') {
+    const bodyB = getBodyAtWorld(end.x, end.y);
+    const bodyA = state.constraintBodyA;
+    if (bodyA && bodyB && bodyA !== bodyB) {
+      const dist = Math.hypot(end.x - start.x, end.y - start.y);
+      const isSpring = preview.type === 'spring';
+      const stiffness = isSpring ? 0.05 : 0.95;
+      const damping = isSpring ? 0.08 : 0.05;
+      const constraint = Constraint.create({
+        bodyA: bodyA,
+        bodyB: bodyB,
+        pointA: { x: start.x - bodyA.position.x, y: start.y - bodyA.position.y },
+        pointB: { x: end.x - bodyB.position.x, y: end.y - bodyB.position.y },
+        length: Math.max(dist, 20),
+        stiffness: stiffness,
+        damping: damping,
+        label: preview.type,
+      });
+      World.add(state.engine.world, constraint);
+      updateCounts();
+    }
+  } else if (preview.type === 'ropechain') {
+    // 绳索：用小圆球铰链拼接，链节之间不碰撞
+    const bodyA = state.constraintBodyA;
+    if (!bodyA) { state.createStart = null; state.createPreview = null; state.constraintBodyA = null; return; }
+
+    const chainLen = Math.hypot(end.x - start.x, end.y - start.y);
+    // 减少链节数量，增大间距，避免挤压乱抖
+    const linkSize = 6;
+    const linkGap = linkSize * 2.8; // 间距增大
+    const linkCount = Math.max(2, Math.min(12, Math.floor(chainLen / linkGap)));
+    const dx = (end.x - start.x) / linkCount;
+    const dy = (end.y - start.y) / linkCount;
+
+    let prevBody = bodyA;
+
+    for (let i = 1; i < linkCount; i++) {
+      const bx = start.x + dx * i;
+      const by = start.y + dy * i;
+      const link = Bodies.circle(bx, by, linkSize, {
+        friction: 0.1,
+        restitution: 0.05,
+        density: 0.0005,   // 更轻
+        isSensor: true,     // 不参与碰撞检测，只用来传递约束
+        label: 'rope_link',
+      });
+      World.add(state.engine.world, link);
+
+      const joint = Constraint.create({
+        bodyA: prevBody,
+        bodyB: link,
+        length: Math.hypot(dx, dy),
+        stiffness: 0.6,
+        damping: 0.2,
+        label: 'rope_joint',
+      });
+      World.add(state.engine.world, joint);
+      prevBody = link;
+    }
+
+    // 最后一个链节连接到终点物体
+    const bodyB = getBodyAtWorld(end.x, end.y);
+    if (bodyB && bodyB !== bodyA) {
+      const joint = Constraint.create({
+        bodyA: prevBody,
+        bodyB: bodyB,
+        length: Math.hypot(dx, dy),
+        stiffness: 0.6,
+        damping: 0.2,
+        label: 'rope_joint',
+      });
+      World.add(state.engine.world, joint);
+    }
+
+    updateCounts();
+  }
+
+  state.createStart = null;
+  state.createPreview = null;
+  state.constraintBodyA = null;
+}
+
+function removeBody(body) {
+  // 移除相关约束
+  const constraints = Composite.allConstraints(state.engine.world);
+  constraints.forEach(c => {
+    if (c.bodyA === body || c.bodyB === body) {
+      World.remove(state.engine.world, c);
+    }
+  });
+  World.remove(state.engine.world, body);
+  if (state.selectedBody === body) deselectBody();
+  updateCounts();
+}
+
+function duplicateBody(body) {
+  let newBody;
+  const offset = 30;
+
+  if (body.circleRadius) {
+    newBody = Bodies.circle(
+      body.position.x + offset,
+      body.position.y + offset,
+      body.circleRadius,
+      {
+        isStatic: body.isStatic,
+        friction: body.friction,
+        restitution: body.restitution,
+        density: body.density,
+        label: body.label,
+      }
+    );
+  } else {
+    // 矩形或多边形：用矩形近似
+    const w = body.bounds.max.x - body.bounds.min.x;
+    const h = body.bounds.max.y - body.bounds.min.y;
+    newBody = Bodies.rectangle(
+      body.position.x + offset,
+      body.position.y + offset,
+      w, h,
+      {
+        isStatic: body.isStatic,
+        friction: body.friction,
+        restitution: body.restitution,
+        density: body.density,
+        angle: body.angle,
+        label: body.label,
+      }
+    );
+  }
+
+  World.add(state.engine.world, newBody);
+  selectBody(newBody);
+  updateCounts();
+  return newBody;
+}
+
+// ============================================================
+//  选中物体
+// ============================================================
+function selectBody(body) {
+  state.selectedBody = body;
+  const panel = document.getElementById('prop-panel');
+  panel.classList.remove('hidden-panel');
+  updatePropertyPanel();
+}
+
+function deselectBody() {
+  state.selectedBody = null;
+  const panel = document.getElementById('prop-panel');
+  panel.classList.add('hidden-panel');
+}
+
+function updatePropertyPanel() {
+  const b = state.selectedBody;
+  if (!b) return;
+
+  document.getElementById('prop-type').textContent = b.label || 'body';
+  document.getElementById('prop-mass').value = b.mass.toFixed(2);
+  document.getElementById('prop-mass-range').value = Math.min(b.mass, 50);
+  document.getElementById('prop-friction').value = b.friction.toFixed(2);
+  document.getElementById('prop-friction-range').value = b.friction;
+  document.getElementById('prop-restitution').value = b.restitution.toFixed(2);
+  document.getElementById('prop-restitution-range').value = b.restitution;
+
+  const sw = document.getElementById('prop-static');
+  if (b.isStatic) sw.classList.add('on'); else sw.classList.remove('on');
+
+  // 显示受力同步
+  const forcesSw = document.getElementById('prop-show-forces');
+  if (b.showForces === undefined) b.showForces = true;
+  if (b.showForces) forcesSw.classList.add('on'); else forcesSw.classList.remove('on');
+}
+
+// ============================================================
+//  UI 绑定
+// ============================================================
+function setupUI() {
+  // 工具按钮
+  document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
+    btn.addEventListener('click', () => setTool(btn.dataset.tool));
+  });
+
+  // 播放控制
+  document.getElementById('btn-play').addEventListener('click', () => {
+    state.running = true;
+    state.lastFpsTime = performance.now();
+    requestAnimationFrame(loop);
+  });
+  document.getElementById('btn-pause').addEventListener('click', () => {
+    state.running = false;
+  });
+  document.getElementById('btn-reset').addEventListener('click', resetScene);
+
+  // 帮助弹窗
+  const helpModal = document.getElementById('help-modal');
+  document.getElementById('btn-help').addEventListener('click', () => {
+    helpModal.style.display = 'flex';
+  });
+  document.getElementById('btn-help-close').addEventListener('click', () => {
+    helpModal.style.display = 'none';
+  });
+  helpModal.addEventListener('click', (e) => {
+    if (e.target === helpModal) helpModal.style.display = 'none';
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && helpModal.style.display === 'flex') {
+      helpModal.style.display = 'none';
+    }
+  });
+
+  // 视图控制
+  document.getElementById('btn-zoom-in').addEventListener('click', () => zoomAt(1.2));
+  document.getElementById('btn-zoom-out').addEventListener('click', () => zoomAt(0.8));
+  document.getElementById('btn-reset-view').addEventListener('click', resetView);
+  document.getElementById('btn-toggle-grid').addEventListener('click', function() {
+    state.showGrid = !state.showGrid;
+    this.classList.toggle('primary', state.showGrid);
+    this.style.background = state.showGrid ? 'hsl(205 90% 58% / 0.2)' : '';
+    this.style.borderColor = state.showGrid ? 'hsl(205 90% 58%)' : '';
+  });
+  document.getElementById('btn-toggle-forces').addEventListener('click', function() {
+    state.showForces = !state.showForces;
+    this.style.background = state.showForces ? 'hsl(205 90% 58% / 0.2)' : '';
+    this.style.borderColor = state.showForces ? 'hsl(205 90% 58%)' : '';
+  });
+
+  // 全局设置
+  document.getElementById('gravity-slider').addEventListener('input', (e) => {
+    const g = parseFloat(e.target.value);
+    state.engine.gravity.y = g / 9.81;
+    document.getElementById('gravity-val').textContent = g.toFixed(2) + ' m/s²';
+  });
+  document.getElementById('timescale-slider').addEventListener('input', (e) => {
+    state.timeScale = parseFloat(e.target.value);
+    document.getElementById('timescale-val').textContent = state.timeScale.toFixed(1) + 'x';
+  });
+
+  // 受力类型过滤器
+  const filterBar = document.getElementById('force-filter-bar');
+  Object.keys(FORCE_TYPES).forEach(key => {
+    const ft = FORCE_TYPES[key];
+    const btn = document.createElement('button');
+    btn.className = 'force-filter-btn';
+    btn.dataset.forceType = key;
+    btn.innerHTML = `<span class="dot" style="background:${ft.color}"></span>${ft.label}`;
+    btn.style.cssText = `
+      display:inline-flex; align-items:center; gap:4px;
+      padding:3px 8px; font-size:11px; font-weight:500;
+      background:${state.forceFilters[key] ? 'hsla(205,90%,58%,0.15)' : 'hsla(215,25%,22%,0.5)'};
+      border:1px solid ${state.forceFilters[key] ? 'hsl(205,90%,58%)' : 'hsl(215,25%,28%)'};
+      border-radius:6px; color:${state.forceFilters[key] ? 'hsl(205,90%,80%)' : 'hsl(215,15%,55%)'};
+      cursor:pointer; transition:all 0.15s;
+      font-family:'Inter',system-ui,sans-serif;
+    `;
+    btn.addEventListener('click', () => {
+      state.forceFilters[key] = !state.forceFilters[key];
+      btn.style.background = state.forceFilters[key] ? 'hsla(205,90%,58%,0.15)' : 'hsla(215,25%,22%,0.5)';
+      btn.style.borderColor = state.forceFilters[key] ? 'hsl(205,90%,58%)' : 'hsl(215,25%,28%)';
+      btn.style.color = state.forceFilters[key] ? 'hsl(205,90%,80%)' : 'hsl(215,15%,55%)';
+    });
+    filterBar.appendChild(btn);
+  });
+
+  // 属性面板
+  setupPropertyPanel();
+
+  // 右键菜单
+  document.querySelectorAll('.ctx-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const action = item.dataset.action;
+      if (!state.selectedBody) return;
+      if (action === 'delete') removeBody(state.selectedBody);
+      else if (action === 'duplicate') duplicateBody(state.selectedBody);
+      else if (action === 'toggle-static') {
+        Body.setStatic(state.selectedBody, !state.selectedBody.isStatic);
+        updatePropertyPanel();
+      }
+      document.getElementById('context-menu').style.display = 'none';
+    });
+  });
+}
+
+function setupPropertyPanel() {
+  const b = () => state.selectedBody;
+
+  // 质量
+  document.getElementById('prop-mass').addEventListener('change', (e) => {
+    if (b()) Body.setMass(b(), parseFloat(e.target.value) || 1);
+    updatePropertyPanel();
+  });
+  document.getElementById('prop-mass-range').addEventListener('input', (e) => {
+    if (b()) {
+      Body.setMass(b(), parseFloat(e.target.value));
+      document.getElementById('prop-mass').value = b().mass.toFixed(2);
+    }
+  });
+
+  // 摩擦
+  document.getElementById('prop-friction').addEventListener('change', (e) => {
+    if (b()) b().friction = parseFloat(e.target.value) || 0;
+    updatePropertyPanel();
+  });
+  document.getElementById('prop-friction-range').addEventListener('input', (e) => {
+    if (b()) {
+      b().friction = parseFloat(e.target.value);
+      document.getElementById('prop-friction').value = b().friction.toFixed(2);
+    }
+  });
+
+  // 弹性
+  document.getElementById('prop-restitution').addEventListener('change', (e) => {
+    if (b()) b().restitution = parseFloat(e.target.value) || 0;
+    updatePropertyPanel();
+  });
+  document.getElementById('prop-restitution-range').addEventListener('input', (e) => {
+    if (b()) {
+      b().restitution = parseFloat(e.target.value);
+      document.getElementById('prop-restitution').value = b().restitution.toFixed(2);
+    }
+  });
+
+  // 静态切换
+  document.getElementById('prop-static').addEventListener('click', function() {
+    if (b()) {
+      Body.setStatic(b(), !b().isStatic);
+      this.classList.toggle('on');
+    }
+  });
+
+  // 显示受力
+  document.getElementById('prop-show-forces').addEventListener('click', function() {
+    if (b()) {
+      if (b().showForces === undefined) b().showForces = true;
+      b().showForces = !b().showForces;
+      this.classList.toggle('on');
+    }
+  });
+
+  // 复制/删除
+  document.getElementById('btn-duplicate').addEventListener('click', () => {
+    if (b()) duplicateBody(b());
+  });
+  document.getElementById('btn-delete-prop').addEventListener('click', () => {
+    if (b()) removeBody(b());
+  });
+}
+
+function setTool(tool) {
+  state.currentTool = tool;
+  document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector(`.tool-btn[data-tool="${tool}"]`);
+  if (btn) btn.classList.add('active');
+
+  const wrap = document.getElementById('canvas-wrap');
+  wrap.classList.remove('select-tool', 'create-tool');
+  if (tool === 'select') wrap.classList.add('select-tool');
+  else if (['box', 'circle', 'ramp', 'platform', 'spring', 'rod', 'ropechain'].includes(tool)) {
+    wrap.classList.add('create-tool');
+  }
+
+  // 重置创建状态
+  state.createStart = null;
+  state.createPreview = null;
+  state.constraintBodyA = null;
+}
+
+function zoomAt(factor) {
+  const cx = state.width / 2;
+  const cy = state.height / 2;
+  const worldBefore = screenToWorld(cx, cy);
+  state.camera.zoom = Math.max(0.2, Math.min(5, state.camera.zoom * factor));
+  const worldAfter = screenToWorld(cx, cy);
+  state.camera.x += (worldAfter.x - worldBefore.x) * state.camera.zoom;
+  state.camera.y += (worldAfter.y - worldBefore.y) * state.camera.zoom;
+  updateZoomDisplay();
+}
+
+function resetView() {
+  state.camera.zoom = 1;
+  state.camera.x = state.width / 2;
+  state.camera.y = state.height / 2;
+  updateZoomDisplay();
+}
+
+function updateZoomDisplay() {
+  document.getElementById('zoom-val').textContent = Math.round(state.camera.zoom * 100) + '%';
+}
+
+// ============================================================
+//  键盘
+// ============================================================
+function setupKeyboard() {
+  document.addEventListener('keydown', (e) => {
+    // 空格按下
+    if (e.code === 'Space' && !e.repeat) {
+      e.preventDefault();
+      state.spacePressed = true;
+      document.getElementById('canvas-wrap').style.cursor = 'grab';
+      return;
+    }
+
+    if (e.target.tagName === 'INPUT') return;
+
+    switch (e.key.toLowerCase()) {
+      case 'v': setTool('select'); break;
+      case 'b': setTool('box'); break;
+      case 'c': setTool('circle'); break;
+      case 'r': setTool('ramp'); break;
+      case 'p': setTool('platform'); break;
+      case 's': setTool('spring'); break;
+      case 'h': setTool('rod'); break;
+      case 'k': setTool('ropechain'); break;
+      case 'd': setTool('delete'); break;
+      case 'delete':
+      case 'backspace':
+        if (state.selectedBody) removeBody(state.selectedBody);
+        break;
+      case ' ':
+        e.preventDefault();
+        state.running = !state.running;
+        if (state.running) {
+          state.lastFpsTime = performance.now();
+          requestAnimationFrame(loop);
+        }
+        break;
+      case '0':
+        resetView();
+        break;
+      case '+':
+      case '=':
+        zoomAt(1.2);
+        break;
+      case '-':
+        zoomAt(0.8);
+        break;
+      case 'escape':
+        state.createStart = null;
+        state.createPreview = null;
+        state.constraintBodyA = null;
+        setTool('select');
+        break;
+    }
+  });
+
+  document.addEventListener('keyup', (e) => {
+    if (e.code === 'Space') {
+      state.spacePressed = false;
+      document.getElementById('canvas-wrap').style.cursor = '';
+    }
+  });
+}
+
+// ============================================================
+//  演示场景
+// ============================================================
+function createDemoScene() {
+  // 地面
+  const ground = Bodies.rectangle(0, 400, 2000, 40, {
+    isStatic: true, friction: 0.5, restitution: 0.2, label: 'ground'
+  });
+  World.add(state.engine.world, ground);
+
+  // 斜面（三角形碰撞体，更精确）
+  const rampVerts = [
+    { x: -150, y: 10 },
+    { x: 150, y: 10 },
+    { x: -150, y: -80 },
+  ];
+  const ramp = Bodies.fromVertices(-300, 240, rampVerts, {
+    isStatic: true,
+    friction: 0.3,
+    frictionStatic: 0.5,
+    restitution: 0.1,
+    density: 0.001,
+    label: 'ramp',
+  });
+
+  // 球
+  const ball = Bodies.circle(-400, 50, 25, {
+    friction: 0.08, restitution: 0.4, density: 0.002, label: 'ball'
+  });
+
+  // 方块
+  const box = Bodies.rectangle(100, 300, 50, 50, {
+    friction: 0.2, restitution: 0.2, density: 0.001, label: 'box'
+  });
+
+  // 单摆
+  const pivot = Bodies.circle(400, 50, 8, { isStatic: true, label: 'pivot' });
+  const bob = Bodies.circle(400, 250, 22, {
+    density: 0.003, friction: 0.01, label: 'pendulum'
+  });
+  const rope = Constraint.create({
+    bodyA: pivot, bodyB: bob, length: 200, stiffness: 0.95,
+    damping: 0.02, label: 'rod'
+  });
+  Body.setPosition(bob, { x: 520, y: 230 });
+
+  World.add(state.engine.world, [ramp, ball, box, pivot, bob, rope]);
+  updateCounts();
+}
+
+function saveInitialState() {
+  const bodies = Composite.allBodies(state.engine.world);
+  const constraints = Composite.allConstraints(state.engine.world);
+  state.initialState = {
+    bodies: bodies.map(b => ({
+      id: b.id,
+      position: { ...b.position },
+      velocity: { ...b.velocity },
+      angle: b.angle,
+      angularVelocity: b.angularVelocity,
+    })),
+    constraints: constraints.map(c => ({
+      id: c.id,
+      length: c.length,
+    })),
+  };
+}
+
+function resetScene() {
+  if (!state.initialState) return;
+  const bodies = Composite.allBodies(state.engine.world);
+  bodies.forEach(b => {
+    const init = state.initialState.bodies.find(i => i.id === b.id);
+    if (init) {
+      Body.setPosition(b, { ...init.position });
+      Body.setVelocity(b, { ...init.velocity });
+      Body.setAngle(b, init.angle);
+      Body.setAngularVelocity(b, init.angularVelocity);
+    }
+  });
+  const constraints = Composite.allConstraints(state.engine.world);
+  constraints.forEach(c => {
+    const init = state.initialState.constraints.find(i => i.id === c.id);
+    if (init) c.length = init.length;
+  });
+}
+
+function updateCounts() {
+  const bodies = Composite.allBodies(state.engine.world);
+  document.getElementById('body-count').textContent = bodies.length;
+}
+
+// ============================================================
+//  拖拽物体：平滑追踪 + 速度阻尼
+// ============================================================
+function applyDrag() {
+  const body = state.draggingBody;
+  if (!body || !state.dragTarget || body.isStatic) return;
+
+  const target = state.dragTarget;
+  const pos = body.position;
+  const dx = target.x - pos.x;
+  const dy = target.y - pos.y;
+
+  if (Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1) return;
+
+  // 计算当前速度并阻尼
+  const vx = body.velocity.x;
+  const vy = body.velocity.y;
+
+  // 用平滑因子跟随，避免刚体穿透
+  const followFactor = 0.85;
+  const tweenX = pos.x + dx * followFactor;
+  const tweenY = pos.y + dy * followFactor;
+
+  Body.setPosition(body, { x: tweenX, y: tweenY });
+  
+  // 强力阻尼速度，但不是完全清零——保留轻微速度让惯性自然过渡
+  Body.setVelocity(body, { x: vx * 0.1, y: vy * 0.1 });
+  Body.setAngularVelocity(body, body.angularVelocity * 0.1);
+}
+
+// ============================================================
+//  主循环
+// ============================================================
+const FIXED_DT = 1000 / 60;
+let accumulator = 0;
+let lastTime = performance.now();
+
+function loop(now) {
+  if (!state.running) return;
+
+  let frameDt = now - lastTime;
+  lastTime = now;
+  if (frameDt > 50) frameDt = 50;
+
+  accumulator += frameDt * state.timeScale;
+
+  while (accumulator >= FIXED_DT) {
+    // 每个子步都执行拖拽，确保位置持续跟随
+    // 这样任何碰撞或约束产生的位移立即被修正
+    applyDrag();
+    
+    Engine.update(state.engine, FIXED_DT);
+    accumulator -= FIXED_DT;
+  }
+
+  // FPS
+  state.frameCount++;
+  if (now - state.lastFpsTime >= 500) {
+    state.fps = Math.round(state.frameCount * 1000 / (now - state.lastFpsTime));
+    document.getElementById('fps-val').textContent = state.fps;
+    state.frameCount = 0;
+    state.lastFpsTime = now;
+  }
+
+  render();
+  renderMinimap();
+
+  // 实时更新属性面板
+  if (state.selectedBody && document.activeElement.tagName !== 'INPUT') {
+    updatePropertyPanel();
+  }
+
+  requestAnimationFrame(loop);
+}
+
+// ============================================================
+//  渲染
+// ============================================================
+function render() {
+  const ctx = state.ctx;
+  const w = state.width;
+  const h = state.height;
+
+  // 清屏
+  ctx.fillStyle = 'hsl(215, 40%, 8%)';
+  ctx.fillRect(0, 0, w, h);
+
+  // 背景径向渐变
+  const grad = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, Math.max(w, h) * 0.6);
+  grad.addColorStop(0, 'hsla(215, 60%, 15%, 0.4)');
+  grad.addColorStop(1, 'hsla(215, 40%, 8%, 0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  // 应用相机变换
+  ctx.save();
+  applyCameraTransform(ctx);
+
+  // 网格
+  if (state.showGrid) drawGrid(ctx);
+
+  // 约束
+  drawConstraints(ctx);
+
+  // 物体
+  drawBodies(ctx);
+
+  // 受力箭头
+  if (state.showForces) drawForceArrows(ctx);
+
+  // 创建预览
+  if (state.createPreview) drawCreatePreview(ctx);
+
+  ctx.restore();
+}
+
+function drawGrid(ctx) {
+  // 计算可见范围
+  const topLeft = screenToWorld(0, 0);
+  const bottomRight = screenToWorld(state.width, state.height);
+
+  const gs = state.gridSize;
+  const startX = Math.floor(topLeft.x / gs) * gs;
+  const endX = Math.ceil(bottomRight.x / gs) * gs;
+  const startY = Math.floor(topLeft.y / gs) * gs;
+  const endY = Math.ceil(bottomRight.y / gs) * gs;
+
+  // 细线
+  ctx.strokeStyle = COLORS.gridMinor;
+  ctx.lineWidth = 1 / state.camera.zoom;
+  ctx.beginPath();
+  for (let x = startX; x <= endX; x += gs) {
+    ctx.moveTo(x, topLeft.y);
+    ctx.lineTo(x, bottomRight.y);
+  }
+  for (let y = startY; y <= endY; y += gs) {
+    ctx.moveTo(topLeft.x, y);
+    ctx.lineTo(bottomRight.x, y);
+  }
+  ctx.stroke();
+
+  // 粗线（每5格）
+  const major = gs * 5;
+  const startMx = Math.floor(topLeft.x / major) * major;
+  const endMx = Math.ceil(bottomRight.x / major) * major;
+  const startMy = Math.floor(topLeft.y / major) * major;
+  const endMy = Math.ceil(bottomRight.y / major) * major;
+
+  ctx.strokeStyle = COLORS.gridMajor;
+  ctx.lineWidth = 1 / state.camera.zoom;
+  ctx.beginPath();
+  for (let x = startMx; x <= endMx; x += major) {
+    ctx.moveTo(x, topLeft.y);
+    ctx.lineTo(x, bottomRight.y);
+  }
+  for (let y = startMy; y <= endMy; y += major) {
+    ctx.moveTo(topLeft.x, y);
+    ctx.lineTo(bottomRight.x, y);
+  }
+  ctx.stroke();
+}
+
+function drawBodies(ctx) {
+  const bodies = Composite.allBodies(state.engine.world);
+
+  bodies.forEach(body => {
+    const isStatic = body.isStatic;
+    const isSelected = body === state.selectedBody;
+    const isHover = body === state.hoverBody;
+
+    const strokeColor = isSelected ? COLORS.selectedStroke :
+                        isHover ? COLORS.hoverStroke :
+                        isStatic ? COLORS.staticStroke : COLORS.bodyStroke;
+    const fillColor = isStatic ? COLORS.staticFill : COLORS.bodyFill;
+    const glowColor = isSelected ? COLORS.selectedGlow :
+                      isHover ? 'hsla(205, 90%, 75%, 0.4)' :
+                      isStatic ? 'hsla(215, 20%, 55%, 0.2)' : COLORS.bodyGlow;
+
+    // body.vertices 是世界坐标（已包含 body.position 和 body.angle 变换）
+    // 所以我们直接用世界坐标绘制，不需要 ctx.translate + ctx.rotate
+    const verts = body.vertices;
+
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = isSelected || isHover ? 15 : 8;
+    ctx.strokeStyle = strokeColor;
+    ctx.fillStyle = fillColor;
+    ctx.lineWidth = 2 / state.camera.zoom;
+
+    if (body.circleRadius) {
+      // 圆形的 vertices 也是世界坐标，用第一个顶点到质心的距离算半径绘制
+      ctx.beginPath();
+      ctx.arc(body.position.x, body.position.y, body.circleRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // 内部装饰
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = isStatic ? 'hsla(215, 20%, 55%, 0.3)' : 'hsla(205, 80%, 60%, 0.25)';
+      ctx.lineWidth = 1 / state.camera.zoom;
+      ctx.beginPath();
+      ctx.arc(body.position.x, body.position.y, body.circleRadius * 0.6, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      // 多边形：直接用世界坐标的顶点链绘制
+      ctx.beginPath();
+      ctx.moveTo(verts[0].x, verts[0].y);
+      for (let i = 1; i < verts.length; i++) {
+        ctx.lineTo(verts[i].x, verts[i].y);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // 内框装饰：将世界顶点转换到局部坐标系（绕质心反向旋转）
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = isStatic ? 'hsla(215, 20%, 55%, 0.2)' : 'hsla(205, 80%, 60%, 0.2)';
+      ctx.lineWidth = 1 / state.camera.zoom;
+      const cosA = Math.cos(body.angle);
+      const sinA = Math.sin(body.angle);
+      let minLx = Infinity, minLy = Infinity, maxLx = -Infinity, maxLy = -Infinity;
+      for (const v of verts) {
+        const dx = v.x - body.position.x;
+        const dy = v.y - body.position.y;
+        const lx = dx * cosA + dy * sinA;   // 反向旋转 X
+        const ly = -dx * sinA + dy * cosA;  // 反向旋转 Y
+        minLx = Math.min(minLx, lx);
+        minLy = Math.min(minLy, ly);
+        maxLx = Math.max(maxLx, lx);
+        maxLy = Math.max(maxLy, ly);
+      }
+      // 在质心位置画旋转对齐的内框
+      ctx.save();
+      ctx.translate(body.position.x, body.position.y);
+      ctx.rotate(body.angle);
+      const inset = 5;
+      ctx.strokeRect(minLx + inset, minLy + inset, maxLx - minLx - inset*2, maxLy - minLy - inset*2);
+      ctx.restore();
+    }
+  });
+}
+
+function drawConstraints(ctx) {
+  const constraints = Composite.allConstraints(state.engine.world);
+  const lineW = 1.5 / state.camera.zoom;
+
+  constraints.forEach(c => {
+    if (!c.bodyA || !c.bodyB) return;
+
+    const p1 = {
+      x: c.bodyA.position.x + (c.pointA ? c.pointA.x : 0),
+      y: c.bodyA.position.y + (c.pointA ? c.pointA.y : 0)
+    };
+    const p2 = {
+      x: c.bodyB.position.x + (c.pointB ? c.pointB.x : 0),
+      y: c.bodyB.position.y + (c.pointB ? c.pointB.y : 0)
+    };
+
+    const isSpring = c.label === 'spring' || (c.stiffness < 0.5 && c.label !== 'rod');
+    const isRod = c.label === 'rod' || (c.stiffness >= 0.8 && c.label !== 'spring' && c.label !== 'rope_joint');
+
+    ctx.save();
+    if (isSpring) {
+      ctx.strokeStyle = COLORS.spring;
+      ctx.shadowColor = COLORS.spring;
+      ctx.shadowBlur = 6;
+      ctx.lineWidth = lineW;
+
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const len = Math.hypot(dx, dy);
+      const angle = Math.atan2(dy, dx);
+
+      ctx.translate(p1.x, p1.y);
+      ctx.rotate(angle);
+
+      ctx.beginPath();
+      const coils = Math.max(6, Math.floor(len / 15));
+      const amp = 6;
+      ctx.moveTo(0, 0);
+      ctx.lineTo(8, 0);
+      for (let i = 0; i < coils; i++) {
+        const x1 = 8 + (len - 16) * (i / coils);
+        const x2 = 8 + (len - 16) * ((i + 0.5) / coils);
+        const x3 = 8 + (len - 16) * ((i + 1) / coils);
+        ctx.lineTo(x1, -amp);
+        ctx.lineTo(x2, amp);
+        ctx.lineTo(x3, -amp);
+      }
+      ctx.lineTo(len - 8, 0);
+      ctx.lineTo(len, 0);
+      ctx.stroke();
+    } else if (isRod) {
+      // 杆：双线加粗，带端头
+      ctx.strokeStyle = COLORS.tension;
+      ctx.shadowColor = COLORS.tension;
+      ctx.shadowBlur = 4;
+      ctx.lineWidth = lineW * 2.5;
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+      // 端头圆
+      ctx.fillStyle = COLORS.tension;
+      const r = 3.5 / state.camera.zoom;
+      ctx.beginPath();
+      ctx.arc(p1.x, p1.y, r, 0, Math.PI * 2);
+      ctx.arc(p2.x, p2.y, r, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // 绳索关节（rope_joint）：细虚线
+      ctx.strokeStyle = 'hsla(45, 85%, 60%, 0.4)';
+      ctx.lineWidth = lineW * 1.2;
+      ctx.setLineDash([4 / state.camera.zoom, 4 / state.camera.zoom]);
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.restore();
+  });
+}
+
+// --- 受力分析 ---
+function drawForceArrows(ctx) {
+  const bodies = Composite.allBodies(state.engine.world);
+  const pxPerNewton = 0.8; // 每牛顿显示多少像素
+  const maxArrowLen = 120; // 最长箭头（世界坐标）
+
+  // 全局受力过滤器：只绘制允许的类型
+  const filters = state.forceFilters;
+  const isTypeOn = (type) => filters[type] !== false;
+
+  bodies.forEach(body => {
+    if (body.isStatic) return;
+    if (body.showForces === false) return;
+
+    const pos = body.position;
+    const forces = [];
+    const g = 9.81 * state.engine.gravity.y;
+    const weight = body.mass * g; // 重力大小（N）
+
+    // ===========================================================
+    //  1. 重力 G = mg，垂直向下
+    // ===========================================================
+    if (isTypeOn('gravity')) {
+      const gLen = Math.min(weight * pxPerNewton, maxArrowLen);
+      if (gLen > 3) {
+        forces.push({
+          name: 'gravity',
+          label: 'G',
+          color: COLORS.gravity,
+          dx: 0,
+          dy: gLen,
+        });
+      }
+    }
+
+    // ===========================================================
+    //  2. 碰撞接触力（支持力 + 摩擦力）—— 每个碰撞对独立显示
+    // ===========================================================
+    // 原理：Matter.js 中 collision.normal 是从 bodyA 指向 bodyB 的分离方向
+    // 支持力的正确方向 = 让两个物体分开的方向，从接触面指向本物体内部
+    // 我们用点积检查法线是否指向质心：如果 n·(质心-接触点) > 0 则方向正确
+    if (isTypeOn('normal') || isTypeOn('friction')) {
+      const pairs = state.engine.pairs.list;
+      let pairIndex = 0;
+
+      pairs.forEach(pair => {
+        if (pair.bodyA !== body && pair.bodyB !== body) return;
+        if (!pair.collision || !pair.collision.normal) return;
+
+        const other = pair.bodyA === body ? pair.bodyB : pair.bodyA;
+        const nx = pair.collision.normal.x;
+        const ny = pair.collision.normal.y;
+
+        // 确定法线指向本物体的方向：
+        // 从接触点指向质心的向量
+        let toCenterX, toCenterY;
+        const contacts = pair.activeContacts || [];
+        if (contacts.length > 0) {
+          const contact = contacts[0].vertex || contacts[0];
+          toCenterX = pos.x - contact.x;
+          toCenterY = pos.y - contact.y;
+        } else {
+          toCenterX = pair.bodyB === body ? nx : -nx;
+          toCenterY = pair.bodyB === body ? ny : -ny;
+        }
+        const toCenterLen = Math.hypot(toCenterX, toCenterY);
+        if (toCenterLen < 0.001) return;
+
+        // 支持力方向 = 从接触面指向本物体内部（与法线相反的方向）
+        // 所以用 -normal
+        let nDirX = -nx;
+        let nDirY = -ny;
+
+        // 支持力大小
+        const depth = pair.collision.depth || 0;
+        const nMag = Math.max(weight * pxPerNewton * 0.5, Math.min(depth * body.mass * 15, weight * pxPerNewton * 2));
+
+        pairIndex++;
+
+        if (isTypeOn('normal')) {
+          const nLen = nMag;
+          if (nLen > 2) {
+            forces.push({
+              name: 'normal',
+              label: pairIndex === 1 ? 'N' : 'N' + pairIndex,
+              color: COLORS.normal,
+              dx: nDirX * nLen,
+              dy: nDirY * nLen,
+              offset: pairIndex,
+            });
+          }
+        }
+
+        // 摩擦力
+        if (isTypeOn('friction') && body.friction > 0) {
+          const relVel = {
+            x: body.velocity.x - other.velocity.x,
+            y: body.velocity.y - other.velocity.y
+          };
+          const tDirX = -nDirY;
+          const tDirY = nDirX;
+          const relTangent = relVel.x * tDirX + relVel.y * tDirY;
+          if (Math.abs(relTangent) > 0.05) {
+            const fScale = Math.min(body.friction, 1) * 0.3;
+            const fMag = nMag * fScale;
+            const sign = relTangent > 0 ? -1 : 1;
+            if (fMag > 2) {
+              forces.push({
+                name: 'friction',
+                label: 'f',
+                color: COLORS.friction,
+                dx: tDirX * sign * fMag,
+                dy: tDirY * sign * fMag,
+                offset: pairIndex,
+              });
+            }
+          }
+        }
+      });
+    }
+
+    // ===========================================================
+    //  3. 约束力（弹簧/杆/绳索拉力）—— 每个约束独立显示
+    // ===========================================================
+    if (isTypeOn('tension')) {
+      const constraints = Composite.allConstraints(state.engine.world);
+      constraints.forEach(c => {
+        if (c.bodyA !== body && c.bodyB !== body) return;
+
+        // 计算约束作用点的世界坐标
+        const p1 = {
+          x: c.bodyA.position.x + (c.pointA ? c.pointA.x : 0),
+          y: c.bodyA.position.y + (c.pointA ? c.pointA.y : 0)
+        };
+        const p2 = {
+          x: c.bodyB.position.x + (c.pointB ? c.pointB.x : 0),
+          y: c.bodyB.position.y + (c.pointB ? c.pointB.y : 0)
+        };
+        // 从 body 上的连接点指向对方连接点的方向
+        const myPoint = c.bodyA === body ? p1 : p2;
+        const otherPoint = c.bodyA === body ? p2 : p1;
+        const dx = otherPoint.x - myPoint.x;
+        const dy = otherPoint.y - myPoint.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 1) return;
+
+        const stretch = dist - c.length;
+        const isSpring = c.stiffness < 0.5;
+        const ftColor = isSpring ? COLORS.spring : COLORS.tension;
+        const ftLabel = isSpring ? 'F弹' : 'T';
+
+        if (Math.abs(stretch) > 0.5) {
+          let dirSign;
+          if (isSpring) {
+            dirSign = stretch > 0 ? 1 : 0;
+          } else {
+            dirSign = stretch > 0 ? 1 : -1;
+          }
+          if (dirSign === 0) return;
+
+          const fMag = Math.min(Math.abs(stretch) * c.stiffness * 10, maxArrowLen);
+          if (fMag < 2) return;
+
+          forces.push({
+            name: isSpring ? 'spring' : 'tension',
+            label: ftLabel,
+            color: ftColor,
+            dx: (dx / dist) * fMag * dirSign,
+            dy: (dy / dist) * fMag * dirSign,
+            offset: 0,
+          });
+        }
+      });
+    }
+
+    // ===========================================================
+    //  4. 空气阻力（与速度相反，大小与速度成正比）
+    // ===========================================================
+    if (isTypeOn('airResistance')) {
+      const vx = body.velocity.x;
+      const vy = body.velocity.y;
+      const vMag = Math.hypot(vx, vy);
+      if (vMag > 0.5) {
+        // 空气阻力 F_drag = -k * v，k 取 0.01 * mass
+        const dragK = 0.008 * body.mass;
+        const fDrag = Math.min(dragK * vMag * pxPerNewton * 15, maxArrowLen);
+        if (fDrag > 3) {
+          forces.push({
+            name: 'airResistance',
+            label: 'D',
+            color: COLORS.airResistance,
+            dx: -(vx / vMag) * fDrag,
+            dy: -(vy / vMag) * fDrag,
+          });
+        }
+      }
+    }
+
+    // ===========================================================
+    //  绘制所有力箭头
+    // ===========================================================
+    const aw = 2.5 / state.camera.zoom;
+    // 统计同种力的数量，让重叠的力错开位置
+    const forceCounts = {};
+    forces.forEach(f => {
+      const key = f.name;
+      forceCounts[key] = (forceCounts[key] || 0) + 1;
+    });
+    const forceIdx = {};
+    forces.forEach(f => {
+      const key = f.name;
+      forceIdx[key] = (forceIdx[key] || 0) + 1;
+
+      const len = Math.hypot(f.dx, f.dy);
+      if (len < 3) return;
+
+      // 多组同种力时，在垂直于力的方向错开绘制起点
+      const total = forceCounts[key];
+      const idx = forceIdx[key];
+      const perpDist = 14 / state.camera.zoom; // 垂直偏移间距
+      const perpOffset = (idx - (total + 1) / 2) * perpDist;
+
+      // 力的法向单位向量
+      const ux = f.dx / len;
+      const uy = f.dy / len;
+      // 垂直方向
+      const px = -uy;
+      const py = ux;
+
+      const startX = pos.x + px * perpOffset;
+      const startY = pos.y + py * perpOffset;
+      const endX = startX + f.dx;
+      const endY = startY + f.dy;
+
+      drawArrow(ctx, startX, startY, endX, endY, f.color, aw, f.label);
+    });
+  });
+}
+
+function drawArrow(ctx, x1, y1, x2, y2, color, width, label) {
+  const headLen = 10 / state.camera.zoom;
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 6;
+  ctx.lineWidth = width;
+  ctx.lineCap = 'round';
+
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+
+  // 箭头头部
+  ctx.shadowBlur = 4;
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6),
+             y2 - headLen * Math.sin(angle - Math.PI / 6));
+  ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6),
+             y2 - headLen * Math.sin(angle + Math.PI / 6));
+  ctx.closePath();
+  ctx.fill();
+
+  // 力标签：在箭头尾部和头部中点垂直偏移处显示
+  if (label) {
+    const midX = (x1 + x2) / 2;
+    const midY = (y1 + y2) / 2;
+    // 在箭头右侧（垂直于箭头方向偏移）
+    const perpAngle = angle + Math.PI / 2;
+    const offset = 12 / state.camera.zoom;
+    const tx = midX + Math.cos(perpAngle) * offset;
+    const ty = midY + Math.sin(perpAngle) * offset;
+
+    ctx.shadowBlur = 0;
+    ctx.font = `${12 / state.camera.zoom}px "JetBrains Mono", monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = color;
+    ctx.strokeStyle = 'hsla(215,40%,8%,0.6)';
+    ctx.lineWidth = 2.5 / state.camera.zoom;
+    // 描边提高可读性
+    ctx.strokeText(label, tx, ty);
+    ctx.fillText(label, tx, ty);
+  }
+
+  ctx.restore();
+}
+
+function drawCreatePreview(ctx) {
+  const p = state.createPreview;
+  const start = p.start;
+  const end = p.end;
+
+  ctx.save();
+  ctx.setLineDash([5 / state.camera.zoom, 5 / state.camera.zoom]);
+  ctx.strokeStyle = 'hsl(205, 90%, 65%)';
+  ctx.shadowColor = 'hsl(205, 90%, 65%)';
+  ctx.shadowBlur = 10;
+  ctx.lineWidth = 2 / state.camera.zoom;
+
+  if (p.type === 'box' || p.type === 'platform') {
+    const x = Math.min(start.x, end.x);
+    const y = Math.min(start.y, end.y);
+    const w = Math.abs(end.x - start.x);
+    const h = Math.abs(end.y - start.y);
+    ctx.strokeRect(x, y, w, h);
+  } else if (p.type === 'circle') {
+    const cx = (start.x + end.x) / 2;
+    const cy = (start.y + end.y) / 2;
+    const r = Math.min(Math.abs(end.x - start.x), Math.abs(end.y - start.y)) / 2;
+    if (r > 1) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  } else if (p.type === 'ramp') {
+    // 根据拖拽方向选择斜面朝向
+    const isLeftRamp = end.x >= start.x;
+    const minX = Math.min(start.x, end.x);
+    const maxX = Math.max(start.x, end.x);
+    const minY = Math.min(start.y, end.y);
+    const maxY = Math.max(start.y, end.y);
+    ctx.beginPath();
+    if (isLeftRamp) {
+      // 左斜面：左下(minX,maxY)→右下(maxX,maxY)→左上(minX,minY)
+      ctx.moveTo(minX, maxY);
+      ctx.lineTo(maxX, maxY);
+      ctx.lineTo(minX, minY);
+    } else {
+      // 右斜面：左下(minX,maxY)→右下(maxX,maxY)→右上(maxX,minY)
+      ctx.moveTo(minX, maxY);
+      ctx.lineTo(maxX, maxY);
+      ctx.lineTo(maxX, minY);
+    }
+    ctx.closePath();
+    ctx.stroke();
+  } else if (p.type === 'spring' || p.type === 'rod') {
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(end.x, end.y);
+    ctx.stroke();
+    // 端点标记
+    ctx.fillStyle = 'hsl(205, 90%, 65%)';
+    const r = 3 / state.camera.zoom;
+    ctx.beginPath();
+    ctx.arc(start.x, start.y, r, 0, Math.PI * 2);
+    ctx.arc(end.x, end.y, r, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (p.type === 'ropechain') {
+    // 绳索链预览：画虚线
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(end.x, end.y);
+    ctx.stroke();
+    // 小圆点标记链节
+    const chainLen = Math.hypot(end.x - start.x, end.y - start.y);
+    const linkSize = 6;
+    const linkGap = linkSize * 2.8;
+    const linkCount = Math.max(2, Math.min(12, Math.floor(chainLen / linkGap)));
+    const dx = (end.x - start.x) / linkCount;
+    const dy = (end.y - start.y) / linkCount;
+    for (let i = 1; i < linkCount; i++) {
+      ctx.beginPath();
+      ctx.arc(start.x + dx * i, start.y + dy * i, linkSize, 0, Math.PI * 2);
+      ctx.fillStyle = 'hsla(45, 90%, 65%, 0.4)';
+      ctx.fill();
+      ctx.strokeStyle = 'hsl(45, 90%, 65%)';
+      ctx.lineWidth = 1 / state.camera.zoom;
+      ctx.stroke();
+    }
+  }
+
+  ctx.restore();
+}
+
+// ============================================================
+//  小地图
+// ============================================================
+function renderMinimap() {
+  const ctx = state.minimapCtx;
+  const w = state.minimapCanvas.width / (window.devicePixelRatio || 1);
+  const h = state.minimapCanvas.height / (window.devicePixelRatio || 1);
+
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = 'hsl(215, 40%, 6%)';
+  ctx.fillRect(0, 0, w, h);
+
+  const bodies = Composite.allBodies(state.engine.world);
+  if (bodies.length === 0) return;
+
+  // 计算所有物体的边界
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  bodies.forEach(b => {
+    minX = Math.min(minX, b.bounds.min.x);
+    minY = Math.min(minY, b.bounds.min.y);
+    maxX = Math.max(maxX, b.bounds.max.x);
+    maxY = Math.max(maxY, b.bounds.max.y);
+  });
+
+  // 加边距
+  const pad = 50;
+  minX -= pad; minY -= pad; maxX += pad; maxY += pad;
+
+  const worldW = maxX - minX;
+  const worldH = maxY - minY;
+  const scale = Math.min(w / worldW, h / worldH);
+  const offsetX = (w - worldW * scale) / 2;
+  const offsetY = (h - worldH * scale) / 2;
+
+  // 绘制物体
+  bodies.forEach(b => {
+    ctx.fillStyle = b.isStatic ? 'hsl(215, 20%, 45%)' : 'hsl(205, 80%, 60%)';
+    if (b === state.selectedBody) ctx.fillStyle = 'hsl(45, 90%, 60%)';
+
+    const bx = (b.position.x - minX) * scale + offsetX;
+    const by = (b.position.y - minY) * scale + offsetY;
+
+    if (b.circleRadius) {
+      const br = b.circleRadius * scale;
+      ctx.beginPath();
+      ctx.arc(bx, by, Math.max(br, 2), 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      const bw = (b.bounds.max.x - b.bounds.min.x) * scale;
+      const bh = (b.bounds.max.y - b.bounds.min.y) * scale;
+      ctx.fillRect(bx - bw/2, by - bh/2, Math.max(bw, 2), Math.max(bh, 2));
+    }
+  });
+
+  // 绘制视口框
+  const viewW = state.width / state.camera.zoom;
+  const viewH = state.height / state.camera.zoom;
+  const viewX = (screenToWorld(0, 0).x - minX) * scale + offsetX;
+  const viewY = (screenToWorld(0, 0).y - minY) * scale + offsetY;
+  const viewSW = viewW * scale;
+  const viewSH = viewH * scale;
+
+  ctx.strokeStyle = 'hsl(205, 90%, 70%)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 3]);
+  ctx.strokeRect(viewX, viewY, viewSW, viewSH);
+  ctx.setLineDash([]);
+}
+
+// ============================================================
+//  启动
+// ============================================================
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
