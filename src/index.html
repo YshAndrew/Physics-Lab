@@ -747,6 +747,7 @@ const state = {
   hasMoved: false,
   dragPrevTarget: { x: 0, y: 0 },
   dragVelocity: null,
+  wasStatic: undefined,
 
   // 创建模式（拖拽创建）
   createStart: null,
@@ -936,6 +937,13 @@ function setupInteraction() {
           state.dragTarget = { x: body.position.x, y: body.position.y };
           state.dragPrevTarget = { ...state.dragTarget };
           state.hasMoved = false;
+          // 拖拽期间设为静态，物理引擎不会干扰位置
+          state.wasStatic = body.isStatic;
+          if (!body.isStatic) {
+            Body.setVelocity(body, { x: 0, y: 0 });
+            Body.setAngularVelocity(body, 0);
+            body.isStatic = true;
+          }
         } else {
           deselectBody();
         }
@@ -961,8 +969,8 @@ function setupInteraction() {
     }
   });
 
-  // 鼠标移动
-  canvas.addEventListener('mousemove', (e) => {
+  // 鼠标移动（绑定在 document 上，确保离开画布后仍能追踪）
+  document.addEventListener('mousemove', (e) => {
     const screenPos = getMousePos(e);
     const worldPos = screenToWorld(screenPos.x, screenPos.y);
 
@@ -982,11 +990,10 @@ function setupInteraction() {
         x: worldPos.x - state.dragOffset.x,
         y: worldPos.y - state.dragOffset.y
       };
-      // 记录拖拽速度（用于释放时的惯性传递）
-      const dt = 1/60;
+      // 记录拖拽速度（仅记录，不用于释放时的惯性传递）
       state.dragVelocity = {
-        x: (state.dragTarget.x - (state.dragPrevTarget ? state.dragPrevTarget.x : state.dragTarget.x)) / dt,
-        y: (state.dragTarget.y - (state.dragPrevTarget ? state.dragPrevTarget.y : state.dragTarget.y)) / dt
+        x: state.dragTarget.x - (state.dragPrevTarget ? state.dragPrevTarget.x : state.dragTarget.x),
+        y: state.dragTarget.y - (state.dragPrevTarget ? state.dragPrevTarget.y : state.dragTarget.y)
       };
       const dist = Math.hypot(
         state.dragTarget.x - state.dragStartPos.x,
@@ -1010,10 +1017,8 @@ function setupInteraction() {
   });
 
   // 鼠标松开
-  canvas.addEventListener('mouseup', (e) => {
-    const screenPos = getMousePos(e);
-    const worldPos = screenToWorld(screenPos.x, screenPos.y);
-
+  // 鼠标释放（绑定在 document 上，确保离开画布后仍能释放）
+  document.addEventListener('mouseup', (e) => {
     if (state.isPanning) {
       state.isPanning = false;
       wrap.classList.remove('panning');
@@ -1021,22 +1026,26 @@ function setupInteraction() {
     }
 
     if (state.draggingBody) {
-      // 释放时不设置速度，让物理自然延续
-      state.draggingBody = null;
-      state.dragTarget = null;
-      state.dragVelocity = null;
+      releaseDrag();
       return;
     }
 
     if (state.createStart && state.createPreview) {
-      finishCreate(worldPos);
+      // 仅在鼠标在 canvas 内时完成创建
+      const rect = canvas.getBoundingClientRect();
+      if (e.clientX >= rect.left && e.clientX <= rect.right &&
+          e.clientY >= rect.top && e.clientY <= rect.bottom) {
+        const screenPos = getMousePos(e);
+        const worldPos = screenToWorld(screenPos.x, screenPos.y);
+        finishCreate(worldPos);
+      }
     }
   });
 
-  // 鼠标离开
+  // 鼠标离开 canvas（后备清理）
   canvas.addEventListener('mouseleave', () => {
     state.isPanning = false;
-    state.draggingBody = null;
+    releaseDrag();
     state.hoverBody = null;
     wrap.classList.remove('panning');
   });
@@ -1364,6 +1373,13 @@ function finishCreate(worldPos) {
 }
 
 function removeBody(body) {
+  // 清理拖拽状态（防止删除正在拖拽的物体）
+  if (state.draggingBody === body) {
+    state.draggingBody = null;
+    state.dragTarget = null;
+    state.dragVelocity = null;
+    state.wasStatic = undefined;
+  }
   // 移除相关约束
   const constraints = Composite.allConstraints(state.engine.world);
   constraints.forEach(c => {
@@ -1827,33 +1843,43 @@ function updateCounts() {
 }
 
 // ============================================================
-//  拖拽物体：平滑追踪 + 速度阻尼
+//  拖拽释放：安全恢复动态
+// ============================================================
+function releaseDrag() {
+  const body = state.draggingBody;
+  if (!body) return;
+
+  const wasStatic = state.wasStatic;
+
+  // 先清空拖拽状态（防止后续异常导致状态残留）
+  state.draggingBody = null;
+  state.dragTarget = null;
+  state.dragVelocity = null;
+  state.wasStatic = undefined;
+
+  if (wasStatic === false) {
+    // 微向上推，防止因嵌入其他物体导致暴力弹射
+    Body.setPosition(body, {
+      x: body.position.x,
+      y: body.position.y - 8
+    });
+    body.isStatic = false;
+    // 不从零开始给速度——靠重力自然下落，物体会缓慢分离
+    Body.setVelocity(body, { x: 0, y: 0 });
+    Body.setAngularVelocity(body, 0);
+    Body.setSleeping(body, false);
+  }
+}
+
+// ============================================================
+//  拖拽物体：完全跟随——物体是静态的，物理不干扰
 // ============================================================
 function applyDrag() {
   const body = state.draggingBody;
-  if (!body || !state.dragTarget || body.isStatic) return;
-
   const target = state.dragTarget;
-  const pos = body.position;
-  const dx = target.x - pos.x;
-  const dy = target.y - pos.y;
-
-  if (Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1) return;
-
-  // 计算当前速度并阻尼
-  const vx = body.velocity.x;
-  const vy = body.velocity.y;
-
-  // 用平滑因子跟随，避免刚体穿透
-  const followFactor = 0.85;
-  const tweenX = pos.x + dx * followFactor;
-  const tweenY = pos.y + dy * followFactor;
-
-  Body.setPosition(body, { x: tweenX, y: tweenY });
-  
-  // 强力阻尼速度，但不是完全清零——保留轻微速度让惯性自然过渡
-  Body.setVelocity(body, { x: vx * 0.1, y: vy * 0.1 });
-  Body.setAngularVelocity(body, body.angularVelocity * 0.1);
+  if (!body || !target) return;
+  // 静态物体直接 setPosition，物理引擎不会介入
+  Body.setPosition(body, target);
 }
 
 // ============================================================
@@ -1873,13 +1899,13 @@ function loop(now) {
   accumulator += frameDt * state.timeScale;
 
   while (accumulator >= FIXED_DT) {
-    // 每个子步都执行拖拽，确保位置持续跟随
-    // 这样任何碰撞或约束产生的位移立即被修正
-    applyDrag();
-    
     Engine.update(state.engine, FIXED_DT);
     accumulator -= FIXED_DT;
   }
+
+  // 所有物理子步完成后，将拖拽物体精确置到鼠标位置
+  // （拖拽时物体是静态的，不会被物理移动）
+  applyDrag();
 
   // FPS
   state.frameCount++;
