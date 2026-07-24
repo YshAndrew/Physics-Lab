@@ -427,7 +427,7 @@
   }
   .bottom-controls-mobile::-webkit-scrollbar { display: none; }
 
-  @media (max-width: 768px) {
+  @media (max-width: 1024px) {
     html, body {
       overflow: hidden;
       touch-action: none;
@@ -479,6 +479,21 @@
     /* 底部控制栏 - 移动端专属 */
     #bottom-controls-desktop {
       display: none !important;
+    }
+    /* 1024-1366px 中等屏幕：桌面控制栏可滚动 */
+    @media (min-width: 1025px) and (max-width: 1366px) {
+      #bottom-controls-desktop {
+        max-width: 96vw;
+        overflow-x: auto;
+        gap: 2px;
+        padding: 8px 10px;
+        white-space: nowrap;
+        scrollbar-width: thin;
+      }
+      #bottom-controls-desktop::-webkit-scrollbar { height: 3px; }
+      #bottom-controls-desktop::-webkit-scrollbar-thumb { background: hsl(215 25% 28%); border-radius: 2px; }
+      #bottom-controls-desktop .w-px.h-8.bg-border { flex-shrink: 0; }
+      #bottom-controls-desktop > div { flex-shrink: 0; }
     }
     .bottom-controls-mobile {
       display: flex;
@@ -658,6 +673,53 @@
       font-size: 11px;
       pointer-events: none;
       transform: translate(-50%, -120%);
+    }
+  }
+
+  /* 触摸设备备用检测：任何触摸屏设备都启用移动端布局 */
+  @media (hover: none) and (pointer: coarse) {
+    #bottom-controls-desktop {
+      display: none !important;
+    }
+    .bottom-controls-mobile {
+      display: flex;
+    }
+    #panel-create, #prop-panel {
+      display: none !important;
+    }
+    .absolute.top-4.left-4.panel {
+      padding: 6px 10px;
+      gap: 4px;
+    }
+    .absolute.top-4.left-4.panel .ctrl-btn span {
+      display: none;
+    }
+    .absolute.top-4.left-4.panel .ctrl-btn {
+      padding: 6px;
+      width: 32px;
+      height: 32px;
+    }
+    .absolute.top-4.right-4.panel {
+      padding: 4px;
+      gap: 2px;
+    }
+    .absolute.top-4.right-4.panel .ctrl-btn {
+      padding: 4px;
+      width: 28px;
+      height: 28px;
+    }
+    .absolute.top-4.right-4.panel .ctrl-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+    .zoom-indicator span {
+      font-size: 10px;
+    }
+    #minimap {
+      width: 100px !important;
+      height: 70px !important;
+      right: 8px !important;
+      bottom: 60px !important;
     }
   }
 
@@ -1271,6 +1333,11 @@ const FORCE_TYPES = {
 //  初始化
 // ============================================================
 function init() {
+  // 运行时触摸设备检测：强制启用移动端布局
+  if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+    document.documentElement.classList.add('is-touch-device');
+  }
+
   state.canvas = document.getElementById('canvas');
   state.ctx = state.canvas.getContext('2d');
   state.minimapCanvas = document.getElementById('minimap-canvas');
@@ -1343,7 +1410,7 @@ function resizeCanvas() {
   state.minimapCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   // 移动端：切换显示隐藏对应面板
-  if (window.innerWidth <= 768) {
+  if (window.innerWidth <= 1024) {
     document.getElementById('mobile-prop-panel').style.display = 'none';
   }
 }
@@ -2043,7 +2110,7 @@ function selectBody(body) {
   if (typeof window._mobileSelectBody === 'function') {
     window._mobileSelectBody(body);
   }
-  if (window.innerWidth <= 768 && body) {
+  if (window.innerWidth <= 1024 && body) {
     updateMobilePropPanel();
   }
 }
@@ -2057,7 +2124,7 @@ function deselectBody() {
   if (typeof window._mobileSelectBody === 'function') {
     window._mobileSelectBody(null);
   }
-  if (window.innerWidth <= 768) {
+  if (window.innerWidth <= 1024) {
     document.getElementById('mobile-prop-panel').style.display = 'none';
     document.getElementById('mobile-btn-prop').style.display = 'none';
   }
@@ -2605,7 +2672,7 @@ function setupTouch() {
 //  移动端 UI
 // ============================================================
 function setupMobileUI() {
-  const isMobile = () => window.innerWidth <= 768;
+  const isMobile = () => window.innerWidth <= 1024;
 
   // 移动端底部工具栏按钮
   document.querySelectorAll('.bottom-controls-mobile .mobile-tool-btn[data-tool]').forEach(btn => {
