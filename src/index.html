@@ -936,7 +936,7 @@
           <span class="label-sm">摩擦系数</span>
           <input type="number" id="prop-friction" step="0.01" min="0" max="2">
         </div>
-        <input type="range" id="prop-friction-range" min="0" max="1" step="0.01" value="0.1">
+        <input type="range" id="prop-friction-range" min="0" max="2" step="0.01" value="0.1">
       </div>
 
       <div>
@@ -1094,7 +1094,7 @@
     <div class="prop-row">
       <span class="label-sm">摩擦</span>
       <div style="display:flex;align-items:center;gap:6px;">
-        <input type="range" id="m-prop-friction-range" min="0" max="1" step="0.01" value="0.1" style="width:70px;">
+        <input type="range" id="m-prop-friction-range" min="0" max="2" step="0.01" value="0.1" style="width:70px;">
         <input type="number" id="m-prop-friction" step="0.01" min="0" max="2" style="width:55px;font-size:11px;padding:3px 5px;">
       </div>
     </div>
@@ -1556,16 +1556,27 @@ function setupInteraction() {
         const screenPos = getMousePos(e);
         const worldPos = screenToWorld(screenPos.x, screenPos.y);
         finishCreate(worldPos);
+      } else {
+        // 在画布外释放：清理创建状态，防止残留
+        state.createStart = null;
+        state.createPreview = null;
+        state.constraintBodyA = null;
       }
     }
   });
 
-  // 鼠标离开 canvas（后备清理）
+  // 鼠标离开 canvas（后备清理，包括创建状态）
   canvas.addEventListener('mouseleave', () => {
     state.isPanning = false;
     releaseDrag();
     state.hoverBody = null;
     wrap.classList.remove('panning');
+    // 清理创建状态，防止在画布外释放鼠标导致误创建
+    if (state.createStart || state.createPreview || state.constraintBodyA) {
+      state.createStart = null;
+      state.createPreview = null;
+      state.constraintBodyA = null;
+    }
   });
 
   // 滚轮缩放
@@ -2174,13 +2185,21 @@ function setupUI() {
   document.getElementById('btn-zoom-in').addEventListener('click', () => zoomAt(1.2));
   document.getElementById('btn-zoom-out').addEventListener('click', () => zoomAt(0.8));
   document.getElementById('btn-reset-view').addEventListener('click', resetView);
-  document.getElementById('btn-toggle-grid').addEventListener('click', function() {
+  // 网格按钮 — 初始化高亮样式
+  const gridBtn = document.getElementById('btn-toggle-grid');
+  gridBtn.style.background = state.showGrid ? 'hsl(205 90% 58% / 0.2)' : '';
+  gridBtn.style.borderColor = state.showGrid ? 'hsl(205 90% 58%)' : '';
+  gridBtn.addEventListener('click', function() {
     state.showGrid = !state.showGrid;
     this.classList.toggle('primary', state.showGrid);
     this.style.background = state.showGrid ? 'hsl(205 90% 58% / 0.2)' : '';
     this.style.borderColor = state.showGrid ? 'hsl(205 90% 58%)' : '';
   });
-  document.getElementById('btn-toggle-forces').addEventListener('click', function() {
+  // 受力显示按钮 — 初始化高亮样式
+  const forcesBtn = document.getElementById('btn-toggle-forces');
+  forcesBtn.style.background = state.showForces ? 'hsl(205 90% 58% / 0.2)' : '';
+  forcesBtn.style.borderColor = state.showForces ? 'hsl(205 90% 58%)' : '';
+  forcesBtn.addEventListener('click', function() {
     state.showForces = !state.showForces;
     this.style.background = state.showForces ? 'hsl(205 90% 58% / 0.2)' : '';
     this.style.borderColor = state.showForces ? 'hsl(205 90% 58%)' : '';
@@ -2366,6 +2385,7 @@ let touchState = {
   pinchStartDist: 0,
   pinchStartZoom: 1,
   pinchStartCam: { x: 0, y: 0 },
+  pinchStartCenterWorld: { x: 0, y: 0 }, // 两指中心的世界坐标（用于缩放后保持该点不动）
   longPressTimer: null,
   longPressTriggered: false,
   touchStartPos: null,
@@ -2485,9 +2505,16 @@ function setupTouch() {
       }
     } else if (e.touches.length === 2) {
       // 双指：开始缩放
+      const t1 = e.touches[0], t2 = e.touches[1];
+      const rect = canvas.getBoundingClientRect();
+      const cx = (t1.clientX + t2.clientX) / 2 - rect.left;
+      const cy = (t1.clientY + t2.clientY) / 2 - rect.top;
+      const worldCenter = screenToWorld(cx, cy);
+      touchState.pinchStartCenterWorld = worldCenter;
       touchState.pinchStartDist = pinchDist(e);
       touchState.pinchStartZoom = state.camera.zoom;
       touchState.pinchStartCam = { x: state.camera.x, y: state.camera.y };
+      touchState._pinchCenter = { x: cx, y: cy };
       // 取消长按
       clearLongPress();
       // 取消拖拽
@@ -2557,28 +2584,27 @@ function setupTouch() {
       }
     } else if (e.touches.length === 2) {
       // 双指缩放 + 平移
+      const t1 = e.touches[0], t2 = e.touches[1];
+      const cx = (t1.clientX + t2.clientX) / 2 - rect.left;
+      const cy = (t1.clientY + t2.clientY) / 2 - rect.top;
       const dist = pinchDist(e);
 
-      // 缩放
-      if (touchState.pinchStartDist > 0) {
+      // 缩放：以 pinchStartCenterWorld 为锚点，缩放后保持该点落在两指中心
+      if (touchState.pinchStartDist > 0 && touchState.pinchStartCenterWorld) {
         const scale = dist / touchState.pinchStartDist;
         let newZoom = touchState.pinchStartZoom * scale;
         newZoom = Math.max(0.2, Math.min(5, newZoom));
         state.camera.zoom = newZoom;
+        // 重新计算相机位置：startCenterWorld 的世界坐标 * newZoom + camera = 屏幕中心 (cx,cy)
+        state.camera.x = cx - touchState.pinchStartCenterWorld.x * state.camera.zoom;
+        state.camera.y = cy - touchState.pinchStartCenterWorld.y * state.camera.zoom;
         updateZoomDisplay();
       }
 
-      // 双指平移
-      const t1 = e.touches[0];
-      const t2 = e.touches[1];
-      const cx = (t1.clientX + t2.clientX) / 2 - rect.left;
-      const cy = (t1.clientY + t2.clientY) / 2 - rect.top;
-      if (touchState._pinchCenter) {
-        const dx = cx - touchState._pinchCenter.x;
-        const dy = cy - touchState._pinchCenter.y;
-        state.camera.x += dx;
-        state.camera.y += dy;
-      }
+      // 更新状态为当前帧，使下一帧的缩放以当前帧为基准（增量式缩放）
+      touchState.pinchStartDist = dist;
+      touchState.pinchStartZoom = state.camera.zoom;
+      touchState.pinchStartCenterWorld = screenToWorld(cx, cy);
       touchState._pinchCenter = { x: cx, y: cy };
     }
   }, { passive: false });
@@ -2621,12 +2647,20 @@ function setupTouch() {
     if (state.createStart && state.createPreview) {
       const touch = e.changedTouches[0];
       const rect = canvas.getBoundingClientRect();
-      const screenPos = {
-        x: touch.clientX - rect.left,
-        y: touch.clientY - rect.top
-      };
-      const worldPos = screenToWorld(screenPos.x, screenPos.y);
-      finishCreate(worldPos);
+      // 仅在触摸点在画布内时完成创建，否则清理残留
+      if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+          touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+        const screenPos = {
+          x: touch.clientX - rect.left,
+          y: touch.clientY - rect.top
+        };
+        const worldPos = screenToWorld(screenPos.x, screenPos.y);
+        finishCreate(worldPos);
+      } else {
+        state.createStart = null;
+        state.createPreview = null;
+        state.constraintBodyA = null;
+      }
     }
 
     touchState.touchStartPos = null;
@@ -2644,8 +2678,10 @@ function setupTouch() {
     state.createStart = null;
     state.createPreview = null;
     state.constraintBodyA = null;
+    touchState.isTouchPanning = false;
     touchState.touchStartPos = null;
     touchState._pinchCenter = null;
+    touchState.longPressTriggered = false;
   });
 
   // 阻止画布上的默认触摸行为（如滚动）
@@ -2981,7 +3017,7 @@ function updateMobilePropPanel() {
   document.getElementById('m-prop-mass').value = b.mass.toFixed(2);
   document.getElementById('m-prop-mass-range').value = Math.min(b.mass, 50);
   document.getElementById('m-prop-friction').value = b.friction.toFixed(2);
-  document.getElementById('m-prop-friction-range').value = Math.min(b.friction, 1);
+  document.getElementById('m-prop-friction-range').value = Math.min(b.friction, 2);
   document.getElementById('m-prop-restitution').value = b.restitution.toFixed(2);
   document.getElementById('m-prop-restitution-range').value = b.restitution;
 
@@ -3122,22 +3158,35 @@ function saveInitialState() {
 }
 
 function resetScene() {
-  if (!state.initialState) return;
-  const bodies = Composite.allBodies(state.engine.world);
-  bodies.forEach(b => {
-    const init = state.initialState.bodies.find(i => i.id === b.id);
-    if (init) {
-      Body.setPosition(b, { ...init.position });
-      Body.setVelocity(b, { ...init.velocity });
-      Body.setAngle(b, init.angle);
-      Body.setAngularVelocity(b, init.angularVelocity);
-    }
-  });
-  const constraints = Composite.allConstraints(state.engine.world);
-  constraints.forEach(c => {
-    const init = state.initialState.constraints.find(i => i.id === c.id);
-    if (init) c.length = init.length;
-  });
+  // 清理所有拖拽/创建中的状态，避免悬空引用
+  if (state.draggingBody) releaseDrag();
+  state.selectedBody = null;
+  state.hoverBody = null;
+  state.draggingBody = null;
+  state.dragTarget = null;
+  state.dragVelocity = null;
+  state.wasStatic = undefined;
+  state.createStart = null;
+  state.createPreview = null;
+  state.constraintBodyA = null;
+  // 隐藏属性面板、右键菜单
+  document.getElementById('prop-panel').classList.add('hidden-panel');
+  document.getElementById('context-menu').style.display = 'none';
+  if (window.innerWidth <= 1366) {
+    document.getElementById('mobile-prop-panel').style.display = 'none';
+    document.getElementById('mobile-btn-prop').style.display = 'none';
+  }
+  // 清空世界，重新创建初始场景
+  World.clear(state.engine.world, false);
+  createDemoScene();
+  // 重置相机
+  resetView();
+  // 重启模拟
+  state.running = true;
+  state.lastFpsTime = performance.now();
+  // 保存新的初始状态
+  saveInitialState();
+  updateCounts();
 }
 
 function updateCounts() {
@@ -3536,25 +3585,20 @@ function drawForceArrows(ctx) {
         const nx = pair.collision.normal.x;
         const ny = pair.collision.normal.y;
 
-        // 确定法线指向本物体的方向：
-        // 从接触点指向质心的向量
-        let toCenterX, toCenterY;
-        const contacts = pair.activeContacts || [];
-        if (contacts.length > 0) {
-          const contact = contacts[0].vertex || contacts[0];
-          toCenterX = pos.x - contact.x;
-          toCenterY = pos.y - contact.y;
+        // 支持力方向判定：
+        // Matter.js collision.normal 定义为从 bodyA 指向 bodyB 的分离方向。
+        // - 若本物体是 bodyA：法线指向外部 => 支持力取反（指向内部）
+        // - 若本物体是 bodyB：法线指向内部 => 支持力取正
+        let nDirX, nDirY;
+        if (pair.bodyA === body) {
+          // 当前物体是 bodyA：法线指向外部，支持力指向内部 => 取反
+          nDirX = -nx;
+          nDirY = -ny;
         } else {
-          toCenterX = pair.bodyB === body ? nx : -nx;
-          toCenterY = pair.bodyB === body ? ny : -ny;
+          // 当前物体是 bodyB：法线指向内部，支持力指向内部 => 取正
+          nDirX = nx;
+          nDirY = ny;
         }
-        const toCenterLen = Math.hypot(toCenterX, toCenterY);
-        if (toCenterLen < 0.001) return;
-
-        // 支持力方向 = 从接触面指向本物体内部（与法线相反的方向）
-        // 所以用 -normal
-        let nDirX = -nx;
-        let nDirY = -ny;
 
         // 支持力大小
         const depth = pair.collision.depth || 0;
