@@ -406,6 +406,9 @@
   }
 
   /* 底部操作栏移动端适配 - 关键定位样式全局生效 */
+  /* ========================================
+     移动端工具栏基础样式 (全局)
+     ======================================== */
   .bottom-controls-mobile {
     display: none;
     position: fixed;
@@ -424,188 +427,187 @@
     align-items: center;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    /* scroll-padding 确保最后一个按钮能被滚到可见区域 */
     scroll-padding-right: 16px;
     scroll-padding-left: 16px;
-    /* 隐藏滚动条但保留滚动功能 */
     -ms-overflow-style: none;
   }
   .bottom-controls-mobile::-webkit-scrollbar { display: none; }
-  /* 手机端小屏：按钮更紧凑 */
-  @media (max-width: 480px) {
-    .bottom-controls-mobile {
-      gap: 2px;
-      padding: 4px 4px;
-      padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
-    }
-    .bottom-controls-mobile .mobile-tool-btn {
-      padding: 4px 6px;
-      min-width: 40px;
-    }
-    .bottom-controls-mobile .mobile-tool-btn svg {
-      width: 16px;
-      height: 16px;
-    }
-    .bottom-controls-mobile .mobile-tool-btn span {
-      font-size: 8px;
-    }
-    .bottom-controls-mobile .sep {
-      width: 1px;
-      height: 20px;
-    }
-    #mobile-bottom-drag {
-      width: 14px !important;
-      height: 28px !important;
-    }
-    #mobile-bottom-drag svg {
-      width: 10px !important;
-      height: 10px !important;
-    }
+
+  .mobile-tool-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 10px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: hsl(215 15% 60%);
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    font-size: 9px;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-tap-highlight-color: transparent;
   }
-  /* 极端小屏（<360px）：进一步压缩 */
-  @media (max-width: 360px) {
-    .bottom-controls-mobile .mobile-tool-btn {
-      padding: 3px 4px;
-      min-width: 34px;
-    }
-    .bottom-controls-mobile .mobile-tool-btn svg {
-      width: 14px;
-      height: 14px;
-    }
-    .bottom-controls-mobile .mobile-tool-btn span {
-      display: none;
-    }
+  .mobile-tool-btn svg { width: 20px; height: 20px; }
+  .mobile-tool-btn:active { transform: scale(0.92); }
+  .mobile-tool-btn.active {
+    color: hsl(205 90% 75%);
+    background: hsl(205 90% 58% / 0.15);
+    border-color: hsl(205 90% 58% / 0.3);
   }
 
-  @media (max-width: 1024px) {
-    html, body {
-      overflow: hidden;
-      touch-action: none;
-    }
-    #canvas-wrap {
-      touch-action: none;
-    }
+  /* 移动端属性面板内部样式 */
+  #mobile-prop-panel .prop-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    gap: 8px;
+  }
+  #mobile-prop-panel .prop-row .label-sm { font-size: 10px; flex-shrink: 0; }
+  #mobile-prop-panel .prop-row input[type="number"] {
+    width: 55px; font-size: 11px; padding: 3px 5px;
+  }
+  #mobile-prop-panel .prop-row input[type="range"] { width: 70px; }
+  #mobile-prop-panel .prop-row .value-mono { font-size: 10px; }
+  #mobile-prop-panel .prop-buttons {
+    display: flex; gap: 6px; margin-top: 6px;
+  }
+  #mobile-prop-panel .prop-buttons .ctrl-btn { flex: 1; padding: 6px; font-size: 10px; }
+
+  /* ========================================
+     移动端/平板端统一布局 (≤1366px)
+     ======================================== */
+  @media (max-width: 1366px) {
+    html, body { overflow: hidden; touch-action: none; }
+    #canvas-wrap { touch-action: none; }
 
     /* 隐藏桌面端面板 */
-    #panel-create {
-      display: none !important;
-    }
-    #prop-panel {
-      display: none !important;
-    }
+    #panel-create { display: none !important; }
+    #prop-panel { display: none !important; }
+    #bottom-controls-desktop { display: none !important; }
 
     /* 左上播放控制精简 */
     .absolute.top-4.left-4.panel {
-      padding: 6px 10px;
-      gap: 4px;
+      padding: 6px 10px; gap: 4px;
     }
-    .absolute.top-4.left-4.panel .ctrl-btn span {
-      display: none;
-    }
+    .absolute.top-4.left-4.panel .ctrl-btn span { display: none; }
     .absolute.top-4.left-4.panel .ctrl-btn {
-      padding: 6px;
-      width: 32px;
-      height: 32px;
+      padding: 6px; width: 32px; height: 32px;
     }
 
     /* 右上视图控制精简 */
-    .absolute.top-4.right-4.panel {
-      padding: 4px;
-      gap: 2px;
-    }
+    .absolute.top-4.right-4.panel { padding: 4px; gap: 2px; }
     .absolute.top-4.right-4.panel .ctrl-btn {
-      padding: 4px;
-      width: 28px;
-      height: 28px;
+      padding: 4px; width: 28px; height: 28px;
     }
-    .absolute.top-4.right-4.panel .ctrl-btn svg {
-      width: 14px;
-      height: 14px;
-    }
-    .zoom-indicator span {
-      font-size: 10px;
-    }
+    .absolute.top-4.right-4.panel .ctrl-btn svg { width: 14px; height: 14px; }
+    .zoom-indicator span { font-size: 10px; }
 
-    /* 底部控制栏 - 移动端专属 */
-    #bottom-controls-desktop {
-      display: none !important;
-    }
-    /* 1024-1366px 中等屏幕：桌面控制栏可滚动 */
-    @media (min-width: 1025px) and (max-width: 1366px) {
-      #bottom-controls-desktop {
-        max-width: 96vw;
-        overflow-x: auto;
-        gap: 2px;
-        padding: 8px 10px;
-        white-space: nowrap;
-        scrollbar-width: thin;
-      }
-      #bottom-controls-desktop::-webkit-scrollbar { height: 3px; }
-      #bottom-controls-desktop::-webkit-scrollbar-thumb { background: hsl(215 25% 28%); border-radius: 2px; }
-      #bottom-controls-desktop .w-px.h-8.bg-border { flex-shrink: 0; }
-      #bottom-controls-desktop > div { flex-shrink: 0; }
-    }
+    /* 显示移动端工具栏 + 滚动吸附 */
     .bottom-controls-mobile {
       display: flex;
-    }
-
-    /* iPad 横屏/中等屏：按钮更大，间距更宽松 */
-    @media (min-width: 769px) and (max-width: 1024px) {
-      .bottom-controls-mobile {
-        justify-content: center;
-        gap: 6px;
-        padding: 8px 12px;
-      }
-      .bottom-controls-mobile .mobile-tool-btn {
-        padding: 8px 14px;
-        min-width: 56px;
-      }
-      .bottom-controls-mobile .mobile-tool-btn svg {
-        width: 22px;
-        height: 22px;
-      }
-      .bottom-controls-mobile .mobile-tool-btn span {
-        font-size: 10px;
-      }
-      .bottom-controls-mobile .sep {
-        margin: 0 2px;
-      }
-      #mobile-bottom-drag {
-        display: none !important;
-      }
-    }
-
-    .bottom-controls-mobile .ctrl-btn {
-      flex-shrink: 0;
-      padding: 8px 10px;
-      font-size: 11px;
-      white-space: nowrap;
-    }
-    .bottom-controls-mobile .ctrl-btn svg {
-      width: 14px;
-      height: 14px;
-    }
-    .bottom-controls-mobile .ctrl-btn span {
-      font-size: 10px;
-    }
-    .bottom-controls-mobile .sep {
-      width: 1px;
-      height: 24px;
-      background: hsl(215 25% 22%);
-      flex-shrink: 0;
-    }
-
-    /* 移动端底部工具栏按钮滚动对齐 */
-    .bottom-controls-mobile {
       scroll-snap-type: x proximity;
     }
     .bottom-controls-mobile .mobile-tool-btn,
     .bottom-controls-mobile .sep,
-    #mobile-bottom-drag {
-      scroll-snap-align: start;
+    #mobile-bottom-drag { scroll-snap-align: start; }
+
+    .bottom-controls-mobile .sep {
+      width: 1px; height: 24px;
+      background: hsl(215 25% 22%);
+      flex-shrink: 0;
     }
 
-    /* 移动端浮动工具栏（左下弹出） */
+    /* ========================
+       平板端 (769-1366px)
+       ======================== */
+    @media (min-width: 769px) {
+      .bottom-controls-mobile {
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 16px;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+      }
+      .bottom-controls-mobile .mobile-tool-btn {
+        padding: 10px 16px;
+        min-width: 64px;
+      }
+      .bottom-controls-mobile .mobile-tool-btn svg { width: 24px; height: 24px; }
+      .bottom-controls-mobile .mobile-tool-btn span { font-size: 10px; }
+      .bottom-controls-mobile .sep {
+        margin: 0 4px; height: 30px;
+      }
+      #mobile-bottom-drag { display: none !important; }
+
+      #minimap {
+        width: 140px !important; height: 90px !important;
+        right: 12px !important; bottom: 76px !important;
+      }
+      .zoom-indicator { bottom: 180px !important; }
+      #mobile-prop-panel { right: 12px; bottom: 80px; width: 240px; }
+      #mobile-settings-panel { bottom: 80px; }
+    }
+
+    /* ========================
+       手机端 (≤768px)
+       ======================== */
+    @media (max-width: 768px) {
+      #minimap {
+        width: 100px !important; height: 70px !important;
+        right: 8px !important; bottom: 60px !important;
+      }
+      .zoom-indicator {
+        right: 8px !important; top: auto !important;
+        bottom: 140px !important; padding: 4px 8px !important;
+      }
+      #help-modal .panel {
+        max-height: 90vh !important;
+        margin: 8px !important; padding: 16px !important;
+      }
+      #help-modal .panel .grid-cols-2 { grid-template-columns: 1fr !important; }
+
+      #longpress-indicator {
+        display: none; position: fixed; z-index: 200;
+        padding: 4px 10px;
+        background: hsl(215 35% 12% / 0.9);
+        border: 1px solid hsl(215 25% 24%);
+        border-radius: 6px;
+        color: hsl(215 15% 70%);
+        font-size: 11px;
+        pointer-events: none;
+        transform: translate(-50%, -120%);
+      }
+    }
+
+    /* ========================
+       手机小屏 (≤480px)：按钮更紧凑
+       ======================== */
+    @media (max-width: 480px) {
+      .bottom-controls-mobile { gap: 2px; padding: 4px 4px; padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px)); }
+      .bottom-controls-mobile .mobile-tool-btn { padding: 4px 6px; min-width: 40px; }
+      .bottom-controls-mobile .mobile-tool-btn svg { width: 16px; height: 16px; }
+      .bottom-controls-mobile .mobile-tool-btn span { font-size: 8px; }
+      .bottom-controls-mobile .sep { width: 1px; height: 20px; }
+      #mobile-bottom-drag { width: 14px !important; height: 28px !important; }
+      #mobile-bottom-drag svg { width: 10px !important; height: 10px !important; }
+      #minimap { width: 80px !important; height: 56px !important; }
+      #mobile-prop-panel { width: 190px; right: 8px; bottom: 66px; }
+      #mobile-toolbar { left: 8px; bottom: 66px; min-width: 160px; }
+    }
+
+    /* ========================
+       极端小屏 (≤360px)
+       ======================== */
+    @media (max-width: 360px) {
+      .bottom-controls-mobile .mobile-tool-btn { padding: 3px 4px; min-width: 34px; }
+      .bottom-controls-mobile .mobile-tool-btn svg { width: 14px; height: 14px; }
+      .bottom-controls-mobile .mobile-tool-btn span { display: none; }
+    }
+
+    /* 移动端浮动工具栏（保留兼容） */
     #mobile-toolbar {
       display: none;
       position: fixed;
@@ -631,13 +633,8 @@
       font-size: 12px;
       gap: 8px;
     }
-    #mobile-toolbar .tool-btn svg {
-      width: 16px;
-      height: 16px;
-    }
-    #mobile-toolbar .tool-btn .shortcut {
-      display: none;
-    }
+    #mobile-toolbar .tool-btn svg { width: 16px; height: 16px; }
+    #mobile-toolbar .tool-btn .shortcut { display: none; }
 
     /* 移动端属性面板（右下弹出） */
     #mobile-prop-panel {
@@ -656,191 +653,10 @@
       max-height: 50vh;
       overflow-y: auto;
     }
-    #mobile-prop-panel .prop-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 4px 0;
-      gap: 8px;
-    }
-    #mobile-prop-panel .prop-row .label-sm {
-      font-size: 10px;
-      flex-shrink: 0;
-    }
-    #mobile-prop-panel .prop-row input[type="number"] {
-      width: 55px;
-      font-size: 11px;
-      padding: 3px 5px;
-    }
-    #mobile-prop-panel .prop-row input[type="range"] {
-      width: 70px;
-    }
-    #mobile-prop-panel .prop-row .value-mono {
-      font-size: 10px;
-    }
-    #mobile-prop-panel .prop-buttons {
-      display: flex;
-      gap: 6px;
-      margin-top: 6px;
-    }
-    #mobile-prop-panel .prop-buttons .ctrl-btn {
-      flex: 1;
-      padding: 6px;
-      font-size: 10px;
-    }
-
-    /* 移动端按钮状态 */
-    .mobile-tool-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-      padding: 6px 10px;
-      background: transparent;
-      border: 1px solid transparent;
-      border-radius: 8px;
-      color: hsl(215 15% 60%);
-      cursor: pointer;
-      transition: all 0.15s;
-      flex-shrink: 0;
-      font-size: 9px;
-      font-family: 'Inter', system-ui, sans-serif;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .mobile-tool-btn svg {
-      width: 20px;
-      height: 20px;
-    }
-    .mobile-tool-btn:active {
-      transform: scale(0.92);
-    }
-    .mobile-tool-btn.active {
-      color: hsl(205 90% 75%);
-      background: hsl(205 90% 58% / 0.15);
-      border-color: hsl(205 90% 58% / 0.3);
-    }
-
-    /* 小地图移动端缩小 */
-    #minimap {
-      width: 100px !important;
-      height: 70px !important;
-      right: 8px !important;
-      bottom: 60px !important;
-    }
-
-    /* 缩放指示器移动到右下 */
-    .zoom-indicator {
-      right: 8px !important;
-      top: auto !important;
-      bottom: 140px !important;
-      padding: 4px 8px !important;
-    }
-
-    /* 帮助弹窗移动端适配 */
-    #help-modal .panel {
-      max-height: 90vh !important;
-      margin: 8px !important;
-      padding: 16px !important;
-    }
-    #help-modal .panel .grid-cols-2 {
-      grid-template-columns: 1fr !important;
-    }
-
-    /* 长按提示 */
-    #longpress-indicator {
-      display: none;
-      position: fixed;
-      z-index: 200;
-      padding: 4px 10px;
-      background: hsl(215 35% 12% / 0.9);
-      border: 1px solid hsl(215 25% 24%);
-      border-radius: 6px;
-      color: hsl(215 15% 70%);
-      font-size: 11px;
-      pointer-events: none;
-      transform: translate(-50%, -120%);
-    }
   }
 
-  /* 触摸设备备用检测：任何触摸屏设备都启用移动端布局 */
-  @media (hover: none) and (pointer: coarse) {
-    #bottom-controls-desktop {
-      display: none !important;
-    }
-    .bottom-controls-mobile {
-      display: flex;
-    }
-    #panel-create, #prop-panel {
-      display: none !important;
-    }
-    .absolute.top-4.left-4.panel {
-      padding: 6px 10px;
-      gap: 4px;
-    }
-    .absolute.top-4.left-4.panel .ctrl-btn span {
-      display: none;
-    }
-    .absolute.top-4.left-4.panel .ctrl-btn {
-      padding: 6px;
-      width: 32px;
-      height: 32px;
-    }
-    .absolute.top-4.right-4.panel {
-      padding: 4px;
-      gap: 2px;
-    }
-    .absolute.top-4.right-4.panel .ctrl-btn {
-      padding: 4px;
-      width: 28px;
-      height: 28px;
-    }
-    .absolute.top-4.right-4.panel .ctrl-btn svg {
-      width: 14px;
-      height: 14px;
-    }
-    .zoom-indicator span {
-      font-size: 10px;
-    }
-    #minimap {
-      width: 100px !important;
-      height: 70px !important;
-      right: 8px !important;
-      bottom: 60px !important;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .bottom-controls-mobile .ctrl-btn {
-      padding: 6px 8px;
-      font-size: 10px;
-    }
-    .bottom-controls-mobile .ctrl-btn svg {
-      width: 12px;
-      height: 12px;
-    }
-    .mobile-tool-btn {
-      padding: 4px 8px;
-      font-size: 8px;
-    }
-    .mobile-tool-btn svg {
-      width: 16px;
-      height: 16px;
-    }
-    #minimap {
-      width: 80px !important;
-      height: 56px !important;
-    }
-    #mobile-prop-panel {
-      width: 190px;
-      right: 8px;
-      bottom: 66px;
-    }
-    #mobile-toolbar {
-      left: 8px;
-      bottom: 66px;
-      min-width: 160px;
-    }
-  }
+  /* 触摸设备微调 */
+  .is-touch-device #canvas-wrap { touch-action: none; }
 </style>
 </head>
 <body>
@@ -882,7 +698,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
-      <div class="space-y-4 text-sm leading-relaxed" style="color:hsl(210,15%,85%);">
+      <div id="help-content-desktop" class="space-y-4 text-sm leading-relaxed" style="color:hsl(210,15%,85%);">
         <div>
           <h3 class="font-semibold mb-1" style="color:hsl(205,80%,70%);">🎯 操作方式</h3>
           <ul class="space-y-1.5 pl-4 list-disc">
@@ -916,10 +732,41 @@
           </div>
           <p class="mt-2 text-xs" style="color:hsl(215,15%,55%);">可在底部栏开关各类力的显示。</p>
         </div>
-        <div class="pt-2 border-t" style="border-color:hsl(215,25%,22%);">
-          <p class="text-xs" style="color:hsl(215,15%,55%);">开发者：<span style="color:hsl(205,80%,70%);">AndrewYin</span> · 物理引擎：Matter.js</p>
-          <p class="text-xs mt-1" style="color:hsl(215,15%,45%);">版本 <span id="version-display" style="color:hsl(205,80%,70%);">1.1.0</span></p>
+      </div>
+
+      <!-- 移动端说明书 -->
+      <div id="help-content-mobile" class="space-y-4 text-sm leading-relaxed" style="display:none;color:hsl(210,15%,85%);">
+        <div>
+          <h3 class="font-semibold mb-1" style="color:hsl(205,80%,70%);">🎯 触控操作</h3>
+          <ul class="space-y-1.5 pl-4 list-disc">
+            <li><b>选择/拖拽</b>：点击物体选中后拖拽移动</li>
+            <li><b>平移视图</b>：单指在空白处拖动</li>
+            <li><b>缩放</b>：双指捏合</li>
+            <li><b>删除物体</b>：点击底部「删除」工具，再点击物体</li>
+            <li><b>创建物体</b>：点击底部工具栏的物体类型，在画布上拖拽</li>
+            <li><b>创建约束</b>：先点击一个物体起点，拖拽到第二个物体释放</li>
+            <li><b>长按菜单</b>：长按物体弹出复制/删除/切换静态菜单</li>
+            <li><b>属性面板</b>：选中物体后点击底部「属性」按钮编辑参数</li>
+            <li><b>设置面板</b>：点击底部「设置」按钮调整重力/时间流速</li>
+          </ul>
         </div>
+        <div>
+          <h3 class="font-semibold mb-1" style="color:hsl(205,80%,70%);">📐 受力箭头说明</h3>
+          <div class="space-y-1 pl-4">
+            <p><span style="color:hsl(0,80%,60%);">● G（重力）</span>：竖直向下，G = mg</p>
+            <p><span style="color:hsl(205,80%,65%);">● N（支持力）</span>：垂直于接触面，指向被支持物体</p>
+            <p><span style="color:hsl(150,60%,55%);">● f（摩擦力）</span>：沿接触面，与相对滑动方向相反</p>
+            <p><span style="color:hsl(280,70%,70%);">● F弹（弹簧弹力）</span>：沿弹簧方向，拉长时向内收缩</p>
+            <p><span style="color:hsl(45,85%,60%);">● T（约束力）</span>：沿杆/绳索方向</p>
+            <p><span style="color:hsl(190,50%,55%);">● D（空气阻力）</span>：与速度方向相反（默认关闭）</p>
+          </div>
+          <p class="mt-2 text-xs" style="color:hsl(215,15%,55%);">可在设置面板中开关各类力的显示。</p>
+        </div>
+      </div>
+
+      <div class="pt-2 border-t" style="border-color:hsl(215,25%,22%);">
+        <p class="text-xs" style="color:hsl(215,15%,55%);">开发者：<span style="color:hsl(205,80%,70%);">AndrewYin</span> · 物理引擎：Matter.js</p>
+        <p class="text-xs mt-1" style="color:hsl(215,15%,45%);">版本 <span id="version-display" style="color:hsl(205,80%,70%);">1.1.0</span></p>
       </div>
     </div>
   </div>
@@ -2265,6 +2112,10 @@ function setupUI() {
   const helpModal = document.getElementById('help-modal');
   document.getElementById('btn-help').addEventListener('click', () => {
     helpModal.style.display = 'flex';
+    // 根据设备显示不同说明书内容
+    const isMobile = window.innerWidth <= 1366;
+    document.getElementById('help-content-desktop').style.display = isMobile ? 'none' : '';
+    document.getElementById('help-content-mobile').style.display = isMobile ? '' : 'none';
   });
   document.getElementById('btn-help-close').addEventListener('click', () => {
     helpModal.style.display = 'none';
