@@ -1,40 +1,100 @@
-# Miaoda HTML App
+# Physics Lab · 物理实验室
 
-Minimal single-file HTML app. dev/build 工具链由 [`@lark-apaas/coding-html-devserver`](https://www.npmjs.com/package/@lark-apaas/coding-html-devserver) 提供——vite 封装在内部，本项目不直接依赖 vite、也没有 `vite.config`。
 
-## Structure
+![GitHub Pages](https://img.shields.io/badge/hosted%20on-GitHub%20Pages-blue)
+![Matter.js](https://img.shields.io/badge/physics-Matter.js-amber)
+
+一个基于 [Matter.js](https://brm.io/matter-js/) 的交互式二维物理模拟器，直接在浏览器中运行，无需安装。
+
+🌐 **[在线体验](https://yshandrew.github.io/Physics-Lab/)**
+
+---
+
+## 功能
+
+### 🧰 工具
+- **选择**（`V`）— 点击选中物体，拖拽移动，查看/编辑属性
+- **方块**（`B`）— 拖拽创建矩形刚体
+- **圆球**（`C`）— 拖拽创建圆形刚体
+- **斜面**（`R`）— 拖拽创建三角形斜面
+- **平台**（`P`）— 拖拽创建静态平台
+- **弹簧**（`S`）— 点击两个物体创建弹性约束
+- **连杆**（`H`）— 点击两个物体创建刚性连接
+- **绳链**（`K`）— 从起点拖到终点创建柔绳链
+- **删除**（`D`）— 点击删除物体
+
+### 🎯 交互
+- **拖拽物体** — 选中模式下点击并拖拽移动任意物体
+- **平移视角** — 按住空格 + 鼠标拖拽
+- **缩放** — 滚轮缩放，或 `+/−` 键
+- **属性面板** — 选中物体后实时编辑位置、速度、摩擦等参数
+- **受力分析** — 显示重力、支持力、摩擦力、约束力、空气阻力的箭头
+- **最小地图** — 左下角全局俯视图，显示视口范围
+
+### ⚙️ 控制
+| 快捷键 | 功能 |
+|--------|------|
+| `空格` | 暂停/继续模拟 |
+| `V` | 选择工具 |
+| `B` | 创建方块 |
+| `C` | 创建圆球 |
+| `R` | 创建斜面 |
+| `P` | 创建平台 |
+| `S` | 创建弹簧 |
+| `H` | 创建连杆 |
+| `K` | 创建绳链 |
+| `D` | 删除模式 |
+| `Delete` | 删除选中物体 |
+| `0` | 重置视角 |
+| `+/−` | 缩放 |
+| `Esc` | 取消操作 |
+
+---
+
+## 项目结构
 
 ```
-src/
-  index.html      # 单文件：HTML + 内联 <style> + 内联 <script type="module">
-package.json
+.
+├── src/
+│   └── index.html      ← 单文件应用（HTML + CSS + JS）
+├── .github/
+│   └── workflows/
+│       └── deploy.yml  ← GitHub Pages 自动部署
+├── package.json
+└── README.md
 ```
 
-## Scripts
+所有代码在单个 `index.html` 中，无构建步骤。直接打开即可运行。
+
+## 部署
+
+本项目使用 GitHub Actions 自动部署到 GitHub Pages：
+
+1. 推送 `main` 分支 → 触发 workflow
+2. `src/` 目录内容被发布到 GitHub Pages
+3. 访问 `https://<user>.github.io/<repo>/` 即可使用
+
+## 技术栈
+
+- **物理引擎**: [Matter.js](https://brm.io/matter-js/) v0.20.0
+- **样式**: [Tailwind CSS](https://tailwindcss.com/)（CDN）
+- **字体**: Inter + JetBrains Mono
+- **部署**: GitHub Pages
+
+## 本地运行
+
+无需安装任何工具，直接用浏览器打开 `src/index.html` 即可。
+
+如果需要本地开发服务器（热更新）：
 
 ```bash
-npm install         # 安装工具链
-npm run dev         # 启动 dev server（默认 8001），HMR 自动重载页面
-npm run build       # 纯拷贝 src/ → dist/output/（不打包、不加 hash，产物 = 源码）
+npm run dev
+# 或直接:
+npx serve src
 ```
 
-`dev` / `build` 背后是 `coding-html-devserver dev|build`。dev 借 vite 起 server 拿原生
-HMR；build **不走 vite build**，纯拷贝 `src/` 到 `dist/output/`，保证产物逐字等于源码。
+默认端口 3000，在浏览器打开 `http://localhost:3000` 即可预览。
 
-## 环境变量
+## License
 
-| 变量 | 默认 | 说明 |
-|---|---|---|
-| `CLIENT_DEV_PORT` | `8001` | dev server 监听端口 |
-
-dev server 不读 `CLIENT_BASE_PATH` 设 `base`：沙箱外部 URL 的 `/app/<appid>` prefix 由
-平台网关独家负责，dev server 自己再设 `base` 会跟网关叠加，导致需要
-`/app/<id>/app/<id>/` 两层才能访问。
-
-## Dev server endpoints
-
-- `/` → `src/index.html`（HMR 已启用）
-- `/dev/health` → `{ "ready": true }`（探活接口；server 真正 listening 后才返回 `ready: true`）
-
-沙箱网关接入时外部访问 `https://<host>/app/<appid>/`，网关把 `/app/<appid>` prefix
-剥掉转给 dev server，dev server 这边只看到根路径。
+MIT

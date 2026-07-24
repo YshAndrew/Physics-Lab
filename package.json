@@ -1,13 +1,9 @@
 {
-  "name": "miaoda-html-app",
-  "version": "0.1.0",
+  "name": "physics-lab",
+  "version": "1.0.0",
   "private": true,
-  "type": "module",
   "scripts": {
-    "dev": "coding-html-devserver dev",
-    "build": "coding-html-devserver build"
-  },
-  "devDependencies": {
-    "@lark-apaas/coding-html-devserver": "^0.1.6"
+    "dev": "npx serve src",
+    "build": "echo 'No build needed - src/index.html is the final artifact'"
   }
 }
