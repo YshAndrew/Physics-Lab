@@ -424,8 +424,58 @@
     align-items: center;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    /* scroll-padding 确保最后一个按钮能被滚到可见区域 */
+    scroll-padding-right: 16px;
+    scroll-padding-left: 16px;
+    /* 隐藏滚动条但保留滚动功能 */
+    -ms-overflow-style: none;
   }
   .bottom-controls-mobile::-webkit-scrollbar { display: none; }
+  /* 手机端小屏：按钮更紧凑 */
+  @media (max-width: 480px) {
+    .bottom-controls-mobile {
+      gap: 2px;
+      padding: 4px 4px;
+      padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+    }
+    .bottom-controls-mobile .mobile-tool-btn {
+      padding: 4px 6px;
+      min-width: 40px;
+    }
+    .bottom-controls-mobile .mobile-tool-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+    .bottom-controls-mobile .mobile-tool-btn span {
+      font-size: 8px;
+    }
+    .bottom-controls-mobile .sep {
+      width: 1px;
+      height: 20px;
+    }
+    #mobile-bottom-drag {
+      width: 14px !important;
+      height: 28px !important;
+    }
+    #mobile-bottom-drag svg {
+      width: 10px !important;
+      height: 10px !important;
+    }
+  }
+  /* 极端小屏（<360px）：进一步压缩 */
+  @media (max-width: 360px) {
+    .bottom-controls-mobile .mobile-tool-btn {
+      padding: 3px 4px;
+      min-width: 34px;
+    }
+    .bottom-controls-mobile .mobile-tool-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+    .bottom-controls-mobile .mobile-tool-btn span {
+      display: none;
+    }
+  }
 
   @media (max-width: 1024px) {
     html, body {
@@ -499,6 +549,32 @@
       display: flex;
     }
 
+    /* iPad 横屏/中等屏：按钮更大，间距更宽松 */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .bottom-controls-mobile {
+        justify-content: center;
+        gap: 6px;
+        padding: 8px 12px;
+      }
+      .bottom-controls-mobile .mobile-tool-btn {
+        padding: 8px 14px;
+        min-width: 56px;
+      }
+      .bottom-controls-mobile .mobile-tool-btn svg {
+        width: 22px;
+        height: 22px;
+      }
+      .bottom-controls-mobile .mobile-tool-btn span {
+        font-size: 10px;
+      }
+      .bottom-controls-mobile .sep {
+        margin: 0 2px;
+      }
+      #mobile-bottom-drag {
+        display: none !important;
+      }
+    }
+
     .bottom-controls-mobile .ctrl-btn {
       flex-shrink: 0;
       padding: 8px 10px;
@@ -517,6 +593,16 @@
       height: 24px;
       background: hsl(215 25% 22%);
       flex-shrink: 0;
+    }
+
+    /* 移动端底部工具栏按钮滚动对齐 */
+    .bottom-controls-mobile {
+      scroll-snap-type: x proximity;
+    }
+    .bottom-controls-mobile .mobile-tool-btn,
+    .bottom-controls-mobile .sep,
+    #mobile-bottom-drag {
+      scroll-snap-align: start;
     }
 
     /* 移动端浮动工具栏（左下弹出） */
@@ -832,6 +918,7 @@
         </div>
         <div class="pt-2 border-t" style="border-color:hsl(215,25%,22%);">
           <p class="text-xs" style="color:hsl(215,15%,55%);">开发者：<span style="color:hsl(205,80%,70%);">AndrewYin</span> · 物理引擎：Matter.js</p>
+          <p class="text-xs mt-1" style="color:hsl(215,15%,45%);">版本 <span id="version-display" style="color:hsl(205,80%,70%);">1.1.0</span></p>
         </div>
       </div>
     </div>
@@ -1242,6 +1329,9 @@
 
 const { Engine, World, Bodies, Body, Constraint, Composite,
         Vector, Vertices, Common } = Matter;
+
+// --- 版本号 ---
+const APP_VERSION = '1.1.0';
 
 // --- 全局状态 ---
 const state = {
