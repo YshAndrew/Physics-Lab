@@ -766,7 +766,11 @@
 
       <div class="pt-2 border-t" style="border-color:hsl(215,25%,22%);">
         <p class="text-xs" style="color:hsl(215,15%,55%);">开发者：<span style="color:hsl(205,80%,70%);">AndrewYin</span> · 物理引擎：Matter.js</p>
-        <p class="text-xs mt-1" style="color:hsl(215,15%,45%);">版本 <span id="version-display" style="color:hsl(205,80%,70%);">1.1.0</span></p>
+        <p class="text-xs mt-1" style="color:hsl(215,15%,45%);">
+          版本 <span id="version-display" style="color:hsl(205,80%,70%);">1.1.0</span>
+          <span id="version-changelog" style="color:hsl(150,60%,50%);font-size:9px;margin-left:6px;"></span>
+        </p>
+        <p id="version-detail" style="display:none;margin-top:4px;font-size:10px;color:hsl(215,15%,55%);line-height:1.5;padding:6px 8px;background:hsl(215,25%,14%);border-radius:6px;"></p>
       </div>
     </div>
   </div>
@@ -1063,7 +1067,7 @@
       <span>设置</span>
     </button>
     <button id="mobile-btn-prop" class="mobile-tool-btn" style="display:none;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/><circle cx="12" cy="7" r="3"/><circle cx="18" cy="12" r="3"/><circle cx="6" cy="12" r="3"/></svg>
       <span>属性</span>
     </button>
   </div>
@@ -1089,11 +1093,17 @@
     </div>
     <div class="prop-row">
       <span class="label-sm">摩擦</span>
-      <input type="number" id="m-prop-friction" step="0.01" min="0" max="2" style="width:55px;font-size:11px;padding:3px 5px;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <input type="range" id="m-prop-friction-range" min="0" max="1" step="0.01" value="0.1" style="width:70px;">
+        <input type="number" id="m-prop-friction" step="0.01" min="0" max="2" style="width:55px;font-size:11px;padding:3px 5px;">
+      </div>
     </div>
     <div class="prop-row">
       <span class="label-sm">弹性</span>
-      <input type="number" id="m-prop-restitution" step="0.01" min="0" max="1" style="width:55px;font-size:11px;padding:3px 5px;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <input type="range" id="m-prop-restitution-range" min="0" max="1" step="0.01" value="0.3" style="width:70px;">
+        <input type="number" id="m-prop-restitution" step="0.01" min="0" max="1" style="width:55px;font-size:11px;padding:3px 5px;">
+      </div>
     </div>
     <div class="prop-row">
       <span class="label-sm">静态</span>
@@ -1166,6 +1176,13 @@
       </svg>
       删除物体
     </div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item" data-action="cancel">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+      取消
+    </div>
   </div>
 </div>
 
@@ -1178,7 +1195,21 @@ const { Engine, World, Bodies, Body, Constraint, Composite,
         Vector, Vertices, Common } = Matter;
 
 // --- 版本号 ---
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.2.0';
+const APP_CHANGELOG = {
+  '1.2.0': {
+    label: '移动端优化',
+    detail: '• 新增移动端属性面板（可调节质量/摩擦/弹性）\n• 新增右键菜单「取消」选项\n• 修复长按菜单无法关闭的问题\n• 修复iPad横屏适配\n• 双版本说明书（桌面端/移动端）\n• 优化工具栏溢出滚动',
+  },
+  '1.1.0': {
+    label: '移动端适配',
+    detail: '• 触摸事件支持（拖拽/缩放/长按）\n• 移动端底部工具栏\n• 移动端属性/设置面板\n• 响应式CSS布局\n• 面板拖动触摸支持',
+  },
+  '1.0.0': {
+    label: '初始版本',
+    detail: '• 基于Matter.js的物理模拟\n• 桌面端完整功能',
+  },
+};
 
 // --- 全局状态 ---
 const state = {
@@ -1347,7 +1378,7 @@ function resizeCanvas() {
   state.minimapCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   // 移动端：切换显示隐藏对应面板
-  if (window.innerWidth <= 1024) {
+  if (window.innerWidth <= 1366) {
     document.getElementById('mobile-prop-panel').style.display = 'none';
   }
 }
@@ -1572,12 +1603,14 @@ function setupInteraction() {
     }
   });
 
-  // 点击其他地方关闭右键菜单
-  document.addEventListener('mousedown', (e) => {
+  // 点击/触摸其他地方关闭右键菜单
+  function closeContextMenu(e) {
     if (!e.target.closest('#context-menu')) {
       document.getElementById('context-menu').style.display = 'none';
     }
-  });
+  }
+  document.addEventListener('mousedown', closeContextMenu);
+  document.addEventListener('touchstart', closeContextMenu, { passive: true });
 }
 
 // ============================================================
@@ -2047,7 +2080,7 @@ function selectBody(body) {
   if (typeof window._mobileSelectBody === 'function') {
     window._mobileSelectBody(body);
   }
-  if (window.innerWidth <= 1024 && body) {
+  if (window.innerWidth <= 1366 && body) {
     updateMobilePropPanel();
   }
 }
@@ -2061,7 +2094,7 @@ function deselectBody() {
   if (typeof window._mobileSelectBody === 'function') {
     window._mobileSelectBody(null);
   }
-  if (window.innerWidth <= 1024) {
+  if (window.innerWidth <= 1366) {
     document.getElementById('mobile-prop-panel').style.display = 'none';
     document.getElementById('mobile-btn-prop').style.display = 'none';
   }
@@ -2116,6 +2149,14 @@ function setupUI() {
     const isMobile = window.innerWidth <= 1366;
     document.getElementById('help-content-desktop').style.display = isMobile ? 'none' : '';
     document.getElementById('help-content-mobile').style.display = isMobile ? '' : 'none';
+    // 显示版本号及更新内容
+    document.getElementById('version-display').textContent = APP_VERSION;
+    const changelog = APP_CHANGELOG[APP_VERSION];
+    if (changelog) {
+      document.getElementById('version-changelog').textContent = changelog.label;
+      document.getElementById('version-detail').textContent = changelog.detail;
+      document.getElementById('version-detail').style.display = 'block';
+    }
   });
   document.getElementById('btn-help-close').addEventListener('click', () => {
     helpModal.style.display = 'none';
@@ -2189,6 +2230,10 @@ function setupUI() {
   document.querySelectorAll('.ctx-item').forEach(item => {
     item.addEventListener('click', () => {
       const action = item.dataset.action;
+      if (action === 'cancel') {
+        document.getElementById('context-menu').style.display = 'none';
+        return;
+      }
       if (!state.selectedBody) return;
       if (action === 'delete') removeBody(state.selectedBody);
       else if (action === 'duplicate') duplicateBody(state.selectedBody);
@@ -2613,7 +2658,7 @@ function setupTouch() {
 //  移动端 UI
 // ============================================================
 function setupMobileUI() {
-  const isMobile = () => window.innerWidth <= 1024;
+  const isMobile = () => window.innerWidth <= 1366;
 
   // 移动端底部工具栏按钮
   document.querySelectorAll('.bottom-controls-mobile .mobile-tool-btn[data-tool]').forEach(btn => {
@@ -2891,10 +2936,22 @@ function setupMobilePropertyPanel() {
     if (b()) b().friction = parseFloat(e.target.value) || 0;
     updateMobilePropPanel();
   });
+  document.getElementById('m-prop-friction-range').addEventListener('input', (e) => {
+    if (b()) {
+      b().friction = parseFloat(e.target.value);
+      document.getElementById('m-prop-friction').value = b().friction.toFixed(2);
+    }
+  });
 
   document.getElementById('m-prop-restitution').addEventListener('change', (e) => {
     if (b()) b().restitution = parseFloat(e.target.value) || 0;
     updateMobilePropPanel();
+  });
+  document.getElementById('m-prop-restitution-range').addEventListener('input', (e) => {
+    if (b()) {
+      b().restitution = parseFloat(e.target.value);
+      document.getElementById('m-prop-restitution').value = b().restitution.toFixed(2);
+    }
   });
 
   document.getElementById('m-prop-static').addEventListener('click', function() {
@@ -2924,7 +2981,9 @@ function updateMobilePropPanel() {
   document.getElementById('m-prop-mass').value = b.mass.toFixed(2);
   document.getElementById('m-prop-mass-range').value = Math.min(b.mass, 50);
   document.getElementById('m-prop-friction').value = b.friction.toFixed(2);
+  document.getElementById('m-prop-friction-range').value = Math.min(b.friction, 1);
   document.getElementById('m-prop-restitution').value = b.restitution.toFixed(2);
+  document.getElementById('m-prop-restitution-range').value = b.restitution;
 
   const sw = document.getElementById('m-prop-static');
   if (b.isStatic) sw.classList.add('on'); else sw.classList.remove('on');
