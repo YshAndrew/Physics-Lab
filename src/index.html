@@ -405,10 +405,27 @@
     z-index: 50;
   }
 
-  /* 底部操作栏移动端适配 */
+  /* 底部操作栏移动端适配 - 关键定位样式全局生效 */
   .bottom-controls-mobile {
     display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    background: hsl(215 35% 12% / 0.95);
+    border-top: 1px solid hsl(215 25% 22%);
+    backdrop-filter: blur(10px);
+    padding: 6px 8px;
+    padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 4px;
+    align-items: center;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
   }
+  .bottom-controls-mobile::-webkit-scrollbar { display: none; }
 
   @media (max-width: 768px) {
     html, body {
@@ -465,25 +482,6 @@
     }
     .bottom-controls-mobile {
       display: flex;
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      z-index: 40;
-      background: hsl(215 35% 12% / 0.95);
-      border-top: 1px solid hsl(215 25% 22%);
-      backdrop-filter: blur(10px);
-      padding: 6px 8px;
-      padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
-      overflow-x: auto;
-      overflow-y: hidden;
-      gap: 4px;
-      align-items: center;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-    }
-    .bottom-controls-mobile::-webkit-scrollbar {
-      display: none;
     }
 
     .bottom-controls-mobile .ctrl-btn {
@@ -1022,6 +1020,9 @@
 
   <!-- 移动端底部工具栏 -->
   <div class="bottom-controls-mobile" id="bottom-controls-mobile">
+    <div id="mobile-bottom-drag" style="display:flex;align-items:center;justify-content:center;width:20px;height:32px;flex-shrink:0;cursor:grab;touch-action:none;color:hsl(215,15%,40%);">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><circle cx="8" cy="6" r="1.5"/><circle cx="16" cy="6" r="1.5"/><circle cx="8" cy="12" r="1.5"/><circle cx="16" cy="12" r="1.5"/><circle cx="8" cy="18" r="1.5"/><circle cx="16" cy="18" r="1.5"/></svg>
+    </div>
     <button class="mobile-tool-btn active" data-tool="select">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4L11 20L13 13L20 11L4 4Z"/></svg>
       <span>选择</span>
@@ -1073,8 +1074,8 @@
 
   <!-- 移动端属性面板 -->
   <div id="mobile-prop-panel" class="z-30">
-    <div class="flex justify-between items-center mb-2">
-      <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:hsl(205,80%,70%);">物体属性</span>
+    <div id="mobile-prop-header" class="flex justify-between items-center mb-2" style="cursor:grab;touch-action:none;">
+      <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:hsl(205,80%,70%);pointer-events:none;">物体属性</span>
       <button id="mobile-prop-close" style="background:none;border:none;color:hsl(215,15%,60%);cursor:pointer;padding:4px;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
@@ -1110,8 +1111,8 @@
 
   <!-- 移动端设置面板 -->
   <div id="mobile-settings-panel" class="z-30" style="display:none;position:fixed;left:50%;bottom:72px;transform:translateX(-50%);background:hsl(215,35%,12%,0.96);border:1px solid hsl(215,25%,24%);border-radius:12px;padding:12px;backdrop-filter:blur(10px);box-shadow:0 8px 32px hsla(215,50%,4%,0.6);width:280px;max-height:50vh;overflow-y:auto;">
-    <div class="flex justify-between items-center mb-3">
-      <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:hsl(205,80%,70%);">设置</span>
+    <div id="mobile-settings-header" class="flex justify-between items-center mb-3" style="cursor:grab;touch-action:none;">
+      <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:hsl(205,80%,70%);pointer-events:none;">设置</span>
       <button id="mobile-settings-close" style="background:none;border:none;color:hsl(215,15%,60%);cursor:pointer;padding:4px;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
@@ -1579,55 +1580,141 @@ function setupInteraction() {
 //  面板拖动 & 折叠 + 小地图拖动
 // ============================================================
 function setupPanelDrag() {
-  // 通用面板拖拽
+  /** 通用拖拽（鼠标 + 触摸） */
   function makeDraggable(panelId, headerId) {
     const panel = document.getElementById(panelId);
     const header = document.getElementById(headerId);
     let isDragging = false;
     let dragOffset = { x: 0, y: 0 };
+    let pointerId = null; // 用于指针捕获
 
-    header.addEventListener('mousedown', (e) => {
-      if (e.target.closest('button')) return; // 不拦截按钮
+    function getClientXY(e) {
+      if (e.touches) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      return { x: e.clientX, y: e.clientY };
+    }
+
+    function startDrag(e, cx, cy) {
+      if (e.target && e.target.closest('button')) return;
       isDragging = true;
+      pointerId = e.pointerId != null ? e.pointerId : (e.touches ? e.touches[0].identifier : null);
       const rect = panel.getBoundingClientRect();
-      dragOffset.x = e.clientX - rect.left;
-      dragOffset.y = e.clientY - rect.top;
+      dragOffset.x = cx - rect.left;
+      dragOffset.y = cy - rect.top;
+      // 如果面板之前用 absolute 定位在左下/右下，转 fixed 保留原位
+      const computed = getComputedStyle(panel);
       panel.style.transition = 'none';
       panel.style.position = 'fixed';
-      // 保持原有 left/bottom 转为 left/top
-      const parentRect = document.getElementById('canvas-wrap').getBoundingClientRect();
-      panel.style.left = (rect.left - parentRect.left) + 'px';
-      panel.style.top = (rect.top - parentRect.top) + 'px';
+      panel.style.left = rect.left + 'px';
+      panel.style.top = rect.top + 'px';
       panel.style.bottom = 'auto';
-      e.preventDefault();
-    });
+      panel.style.right = 'auto';
+      // 保存当前 transform 里 translate 的信息，之后恢复
+      panel.dataset._origTransform = computed.transform !== 'none' ? computed.transform : '';
+      panel.style.transform = 'none';
+      if (e.preventDefault) e.preventDefault();
+    }
 
-    document.addEventListener('mousemove', (e) => {
+    function moveDrag(cx, cy) {
       if (!isDragging) return;
-      const parentRect = document.getElementById('canvas-wrap').getBoundingClientRect();
-      panel.style.left = (e.clientX - parentRect.left - dragOffset.x) + 'px';
-      panel.style.top = (e.clientY - parentRect.top - dragOffset.y) + 'px';
+      panel.style.left = (cx - dragOffset.x) + 'px';
+      panel.style.top = (cy - dragOffset.y) + 'px';
+    }
+
+    function endDrag() {
+      if (!isDragging) return;
+      isDragging = false;
+      pointerId = null;
+      panel.style.transition = '';
+      // 恢复 transform
+      if (panel.dataset._origTransform) {
+        panel.style.transform = panel.dataset._origTransform;
+        delete panel.dataset._origTransform;
+      }
+    }
+
+    // ---- 鼠标事件 ----
+    header.addEventListener('mousedown', (e) => {
+      const p = getClientXY(e);
+      startDrag(e, p.x, p.y);
+    });
+    document.addEventListener('mousemove', (e) => {
+      const p = getClientXY(e);
+      moveDrag(p.x, p.y);
+    });
+    document.addEventListener('mouseup', endDrag);
+
+    // ---- 触摸事件 ----
+    header.addEventListener('touchstart', (e) => {
+      if (e.target.closest('button')) return;
+      const p = getClientXY(e);
+      startDrag(e, p.x, p.y);
+      // 防止触发 canvas 的 touchstart
+      e.stopPropagation();
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+      const p = getClientXY(e);
+      moveDrag(p.x, p.y);
+    }, { passive: false });
+
+    document.addEventListener('touchend', (e) => {
+      endDrag();
     });
 
-    document.addEventListener('mouseup', () => {
-      if (isDragging) {
-        isDragging = false;
-        panel.style.transition = '';
-      }
-    });
+    // 离开面板时取消
+    document.addEventListener('touchcancel', endDrag);
   }
 
   function makeCollapsible(panelId, bodyId, btnId) {
+    const panel = document.getElementById(panelId);
     const body = document.getElementById(bodyId);
     const btn = document.getElementById(btnId);
     let collapsed = false;
 
+    // 用 max-height 动画替代 display 切换，避免位置突变
+    function setCollapsed(coll) {
+      collapsed = coll;
+      if (collapsed) {
+        body.dataset._savedScrollHeight = body.scrollHeight + 'px';
+        body.style.overflow = 'hidden';
+        body.style.maxHeight = '0px';
+        body.style.paddingTop = '0';
+        body.style.paddingBottom = '0';
+        body.style.opacity = '0';
+        body.style.transition = 'max-height 0.25s ease, opacity 0.2s ease, padding 0.25s ease';
+        // 面板本身若有 bottom 定位，收起后需要补正
+      } else {
+        const targetH = body.dataset._savedScrollHeight || body.scrollHeight + 'px';
+        body.style.maxHeight = targetH;
+        body.style.opacity = '1';
+        body.style.paddingTop = '';
+        body.style.paddingBottom = '';
+        body.style.transition = 'max-height 0.3s ease, opacity 0.25s ease, padding 0.3s ease';
+        // 动画结束后移除 overflow hidden
+        const onEnd = () => {
+          body.style.overflow = '';
+          body.style.maxHeight = '';
+          body.style.transition = '';
+          body.removeEventListener('transitionend', onEnd);
+        };
+        body.addEventListener('transitionend', onEnd, { once: true });
+      }
+      // 箭头旋转
+      const svg = btn.querySelector('svg');
+      if (svg) {
+        svg.style.transform = collapsed ? 'rotate(-90deg)' : '';
+        svg.style.transition = 'transform 0.25s ease';
+      }
+    }
+
+    // 初始状态：确保 max-height 无限制
+    body.style.maxHeight = 'none';
+    body.style.transition = '';
+    body.style.opacity = '1';
+
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      collapsed = !collapsed;
-      body.style.display = collapsed ? 'none' : '';
-      btn.querySelector('svg').style.transform = collapsed ? 'rotate(-90deg)' : '';
-      btn.querySelector('svg').style.transition = 'transform 0.2s';
+      setCollapsed(!collapsed);
     });
   }
 
@@ -1636,41 +1723,68 @@ function setupPanelDrag() {
   makeCollapsible('panel-create', 'panel-create-body', 'btn-collapse-create');
   makeCollapsible('prop-panel', 'prop-panel-body', 'btn-collapse-prop');
 
-  // 小地图拖动
+  // ---- 小地图拖动（鼠标 + 触摸） ----
   const minimap = document.getElementById('minimap');
   let mmDragging = false;
   let mmDragOffset = { x: 0, y: 0 };
 
-  minimap.addEventListener('mousedown', (e) => {
-    if (e.button !== 0) return;
+  function getMMClientXY(e) {
+    if (e.touches) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    return { x: e.clientX, y: e.clientY };
+  }
+
+  function mmStartDrag(e, cx, cy) {
+    if (e.button && e.button !== 0) return;
     mmDragging = true;
     const rect = minimap.getBoundingClientRect();
-    const parentRect = document.getElementById('canvas-wrap').getBoundingClientRect();
-    mmDragOffset.x = e.clientX - rect.left;
-    mmDragOffset.y = e.clientY - rect.top;
+    mmDragOffset.x = cx - rect.left;
+    mmDragOffset.y = cy - rect.top;
     minimap.style.transition = 'none';
     minimap.style.position = 'fixed';
-    minimap.style.left = (rect.left - parentRect.left) + 'px';
-    minimap.style.top = (rect.top - parentRect.top) + 'px';
+    minimap.style.left = rect.left + 'px';
+    minimap.style.top = rect.top + 'px';
     minimap.style.right = 'auto';
     minimap.style.bottom = 'auto';
-    e.stopPropagation();
-    e.preventDefault();
-  });
+    minimap.style.transform = 'none';
+    if (e.stopPropagation) e.stopPropagation();
+    if (e.preventDefault) e.preventDefault();
+  }
 
-  document.addEventListener('mousemove', (e) => {
+  function mmMoveDrag(cx, cy) {
     if (!mmDragging) return;
-    const parentRect = document.getElementById('canvas-wrap').getBoundingClientRect();
-    minimap.style.left = (e.clientX - parentRect.left - mmDragOffset.x) + 'px';
-    minimap.style.top = (e.clientY - parentRect.top - mmDragOffset.y) + 'px';
-  });
+    minimap.style.left = (cx - mmDragOffset.x) + 'px';
+    minimap.style.top = (cy - mmDragOffset.y) + 'px';
+  }
 
-  document.addEventListener('mouseup', () => {
-    if (mmDragging) {
-      mmDragging = false;
-      minimap.style.transition = '';
-    }
+  function mmEndDrag() {
+    if (!mmDragging) return;
+    mmDragging = false;
+    minimap.style.transition = '';
+  }
+
+  // 鼠标
+  minimap.addEventListener('mousedown', (e) => {
+    const p = getMMClientXY(e);
+    mmStartDrag(e, p.x, p.y);
   });
+  document.addEventListener('mousemove', (e) => {
+    const p = getMMClientXY(e);
+    mmMoveDrag(p.x, p.y);
+  });
+  document.addEventListener('mouseup', mmEndDrag);
+
+  // 触摸
+  minimap.addEventListener('touchstart', (e) => {
+    const p = getMMClientXY(e);
+    mmStartDrag(e, p.x, p.y);
+    e.stopPropagation();
+  }, { passive: true });
+  document.addEventListener('touchmove', (e) => {
+    const p = getMMClientXY(e);
+    mmMoveDrag(p.x, p.y);
+  }, { passive: false });
+  document.addEventListener('touchend', mmEndDrag);
+  document.addEventListener('touchcancel', mmEndDrag);
 }
 
 // ============================================================
@@ -2595,6 +2709,116 @@ function setupMobileUI() {
     document.getElementById('timescale-slider').value = state.timeScale;
     document.getElementById('timescale-val').textContent = state.timeScale.toFixed(1) + 'x';
   });
+
+  // 移动端面板拖拽支持
+  function makeMobileDraggable(panelId, headerId) {
+    const panel = document.getElementById(panelId);
+    const header = document.getElementById(headerId);
+    if (!panel || !header) return;
+
+    let isDragging = false;
+    let dx = 0, dy = 0;
+
+    function getXY(e) {
+      if (e.touches) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      return { x: e.clientX, y: e.clientY };
+    }
+
+    function startDrag(e) {
+      if (e.target && e.target.closest('button')) return;
+      isDragging = true;
+      const rect = panel.getBoundingClientRect();
+      const p = getXY(e);
+      dx = p.x - rect.left;
+      dy = p.y - rect.top;
+      panel.style.transition = 'none';
+      panel.style.left = rect.left + 'px';
+      panel.style.top = rect.top + 'px';
+      // 如果面板之前用 transform 居中，去掉 transform 后用 left/top 定位
+      panel.style.transform = 'none';
+      // 保存原始 transform 信息
+      panel.dataset._origTransform = 'translateX(-50%)';
+      if (e.preventDefault) e.preventDefault();
+      if (e.stopPropagation) e.stopPropagation();
+    }
+
+    function moveDrag(e) {
+      if (!isDragging) return;
+      const p = getXY(e);
+      panel.style.left = (p.x - dx) + 'px';
+      panel.style.top = (p.y - dy) + 'px';
+      panel.style.right = 'auto';
+      panel.style.bottom = 'auto';
+    }
+
+    function endDrag() {
+      if (!isDragging) return;
+      isDragging = false;
+      panel.style.transition = '';
+      // 如果被拖到了远处，不再恢复 transform
+      if (panel.dataset._origTransform && parseFloat(panel.style.left) > 0) {
+        delete panel.dataset._origTransform;
+      }
+    }
+
+    // 鼠标
+    header.addEventListener('mousedown', startDrag);
+    document.addEventListener('mousemove', moveDrag);
+    document.addEventListener('mouseup', endDrag);
+    // 触摸
+    header.addEventListener('touchstart', startDrag, { passive: false });
+    document.addEventListener('touchmove', moveDrag, { passive: false });
+    document.addEventListener('touchend', endDrag);
+    document.addEventListener('touchcancel', endDrag);
+  }
+
+  // 底部工具栏拖拽
+  (function setupBottomDrag() {
+    const bar = document.getElementById('bottom-controls-mobile');
+    const handle = document.getElementById('mobile-bottom-drag');
+    if (!bar || !handle) return;
+
+    let dragging = false;
+    let startY = 0, startBottom = 0;
+
+    function getY(e) {
+      return e.touches ? e.touches[0].clientY : e.clientY;
+    }
+
+    function onStart(e) {
+      dragging = true;
+      startY = getY(e);
+      startBottom = parseFloat(bar.style.bottom) || 0;
+      bar.style.transition = 'none';
+      e.preventDefault();
+    }
+
+    function onMove(e) {
+      if (!dragging) return;
+      const dy = startY - getY(e);
+      const newBottom = Math.max(-200, Math.min(100, startBottom + dy));
+      bar.style.bottom = newBottom + 'px';
+    }
+
+    function onEnd() {
+      if (!dragging) return;
+      dragging = false;
+      bar.style.transition = '';
+    }
+
+    handle.addEventListener('mousedown', onStart);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onEnd);
+    handle.addEventListener('touchstart', onStart, { passive: false });
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onEnd);
+    document.addEventListener('touchcancel', onEnd);
+  })();
+
+  if (isMobile()) {
+    makeMobileDraggable('mobile-prop-panel', 'mobile-prop-header');
+    makeMobileDraggable('mobile-settings-panel', 'mobile-settings-header');
+  }
 
   // 窗口 resize 处理
   window.addEventListener('resize', () => {
