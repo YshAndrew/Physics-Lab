@@ -364,6 +364,337 @@
     padding: 4px 2px;
     margin-top: 4px;
   }
+
+  /* ========================================
+     移动端适配
+     ======================================== */
+
+  /* 移动端面板收起按钮 */
+  #mobile-menu-toggle {
+    display: none;
+    position: fixed;
+    left: 12px;
+    bottom: 12px;
+    z-index: 100;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: hsl(205 90% 58%);
+    border: none;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 16px hsla(205 90% 58% / 0.4);
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+  }
+  #mobile-menu-toggle:active {
+    transform: scale(0.92);
+  }
+  #mobile-menu-toggle svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  #mobile-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: hsla(215, 40%, 4%, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 50;
+  }
+
+  /* 底部操作栏移动端适配 */
+  .bottom-controls-mobile {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    html, body {
+      overflow: hidden;
+      touch-action: none;
+    }
+    #canvas-wrap {
+      touch-action: none;
+    }
+
+    /* 隐藏桌面端面板 */
+    #panel-create {
+      display: none !important;
+    }
+    #prop-panel {
+      display: none !important;
+    }
+
+    /* 左上播放控制精简 */
+    .absolute.top-4.left-4.panel {
+      padding: 6px 10px;
+      gap: 4px;
+    }
+    .absolute.top-4.left-4.panel .ctrl-btn span {
+      display: none;
+    }
+    .absolute.top-4.left-4.panel .ctrl-btn {
+      padding: 6px;
+      width: 32px;
+      height: 32px;
+    }
+
+    /* 右上视图控制精简 */
+    .absolute.top-4.right-4.panel {
+      padding: 4px;
+      gap: 2px;
+    }
+    .absolute.top-4.right-4.panel .ctrl-btn {
+      padding: 4px;
+      width: 28px;
+      height: 28px;
+    }
+    .absolute.top-4.right-4.panel .ctrl-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+    .zoom-indicator span {
+      font-size: 10px;
+    }
+
+    /* 底部控制栏 - 移动端专属 */
+    #bottom-controls-desktop {
+      display: none !important;
+    }
+    .bottom-controls-mobile {
+      display: flex;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 40;
+      background: hsl(215 35% 12% / 0.95);
+      border-top: 1px solid hsl(215 25% 22%);
+      backdrop-filter: blur(10px);
+      padding: 6px 8px;
+      padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+      overflow-x: auto;
+      overflow-y: hidden;
+      gap: 4px;
+      align-items: center;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .bottom-controls-mobile::-webkit-scrollbar {
+      display: none;
+    }
+
+    .bottom-controls-mobile .ctrl-btn {
+      flex-shrink: 0;
+      padding: 8px 10px;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .bottom-controls-mobile .ctrl-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+    .bottom-controls-mobile .ctrl-btn span {
+      font-size: 10px;
+    }
+    .bottom-controls-mobile .sep {
+      width: 1px;
+      height: 24px;
+      background: hsl(215 25% 22%);
+      flex-shrink: 0;
+    }
+
+    /* 移动端浮动工具栏（左下弹出） */
+    #mobile-toolbar {
+      display: none;
+      position: fixed;
+      left: 12px;
+      bottom: 72px;
+      z-index: 60;
+      background: hsl(215 35% 12% / 0.96);
+      border: 1px solid hsl(215 25% 24%);
+      border-radius: 12px;
+      padding: 8px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px hsla(215 50% 4% / 0.6);
+      max-height: 60vh;
+      overflow-y: auto;
+      min-width: 180px;
+    }
+    #mobile-toolbar .tool-category {
+      font-size: 9px;
+      padding: 6px 4px 3px;
+    }
+    #mobile-toolbar .tool-btn {
+      padding: 8px 10px;
+      font-size: 12px;
+      gap: 8px;
+    }
+    #mobile-toolbar .tool-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+    #mobile-toolbar .tool-btn .shortcut {
+      display: none;
+    }
+
+    /* 移动端属性面板（右下弹出） */
+    #mobile-prop-panel {
+      display: none;
+      position: fixed;
+      right: 12px;
+      bottom: 72px;
+      z-index: 60;
+      background: hsl(215 35% 12% / 0.96);
+      border: 1px solid hsl(215 25% 24%);
+      border-radius: 12px;
+      padding: 10px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px hsla(215 50% 4% / 0.6);
+      width: 220px;
+      max-height: 50vh;
+      overflow-y: auto;
+    }
+    #mobile-prop-panel .prop-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      gap: 8px;
+    }
+    #mobile-prop-panel .prop-row .label-sm {
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+    #mobile-prop-panel .prop-row input[type="number"] {
+      width: 55px;
+      font-size: 11px;
+      padding: 3px 5px;
+    }
+    #mobile-prop-panel .prop-row input[type="range"] {
+      width: 70px;
+    }
+    #mobile-prop-panel .prop-row .value-mono {
+      font-size: 10px;
+    }
+    #mobile-prop-panel .prop-buttons {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    #mobile-prop-panel .prop-buttons .ctrl-btn {
+      flex: 1;
+      padding: 6px;
+      font-size: 10px;
+    }
+
+    /* 移动端按钮状态 */
+    .mobile-tool-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 6px 10px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      color: hsl(215 15% 60%);
+      cursor: pointer;
+      transition: all 0.15s;
+      flex-shrink: 0;
+      font-size: 9px;
+      font-family: 'Inter', system-ui, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mobile-tool-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+    .mobile-tool-btn:active {
+      transform: scale(0.92);
+    }
+    .mobile-tool-btn.active {
+      color: hsl(205 90% 75%);
+      background: hsl(205 90% 58% / 0.15);
+      border-color: hsl(205 90% 58% / 0.3);
+    }
+
+    /* 小地图移动端缩小 */
+    #minimap {
+      width: 100px !important;
+      height: 70px !important;
+      right: 8px !important;
+      bottom: 60px !important;
+    }
+
+    /* 缩放指示器移动到右下 */
+    .zoom-indicator {
+      right: 8px !important;
+      top: auto !important;
+      bottom: 140px !important;
+      padding: 4px 8px !important;
+    }
+
+    /* 帮助弹窗移动端适配 */
+    #help-modal .panel {
+      max-height: 90vh !important;
+      margin: 8px !important;
+      padding: 16px !important;
+    }
+    #help-modal .panel .grid-cols-2 {
+      grid-template-columns: 1fr !important;
+    }
+
+    /* 长按提示 */
+    #longpress-indicator {
+      display: none;
+      position: fixed;
+      z-index: 200;
+      padding: 4px 10px;
+      background: hsl(215 35% 12% / 0.9);
+      border: 1px solid hsl(215 25% 24%);
+      border-radius: 6px;
+      color: hsl(215 15% 70%);
+      font-size: 11px;
+      pointer-events: none;
+      transform: translate(-50%, -120%);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .bottom-controls-mobile .ctrl-btn {
+      padding: 6px 8px;
+      font-size: 10px;
+    }
+    .bottom-controls-mobile .ctrl-btn svg {
+      width: 12px;
+      height: 12px;
+    }
+    .mobile-tool-btn {
+      padding: 4px 8px;
+      font-size: 8px;
+    }
+    .mobile-tool-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+    #minimap {
+      width: 80px !important;
+      height: 56px !important;
+    }
+    #mobile-prop-panel {
+      width: 190px;
+      right: 8px;
+      bottom: 66px;
+    }
+    #mobile-toolbar {
+      left: 8px;
+      bottom: 66px;
+      min-width: 160px;
+    }
+  }
 </style>
 </head>
 <body>
@@ -650,7 +981,7 @@
   </div>
 
   <!-- 底部中间：全局设置 -->
-  <div class="absolute bottom-4 left-1/2 -translate-x-1/2 panel p-3 z-10">
+  <div id="bottom-controls-desktop" class="absolute bottom-4 left-1/2 -translate-x-1/2 panel p-3 z-10">
     <div class="flex items-center gap-4 px-2">
       <div class="flex items-center gap-3 w-56">
         <span class="label-sm whitespace-nowrap">重力</span>
@@ -681,6 +1012,140 @@
   <!-- 小地图 -->
   <div id="minimap" class="z-10">
     <canvas id="minimap-canvas"></canvas>
+  </div>
+
+  <!-- 长按指示器 -->
+  <div id="longpress-indicator">松手以打开菜单</div>
+
+  <!-- 移动端遮罩 -->
+  <div id="mobile-overlay"></div>
+
+  <!-- 移动端底部工具栏 -->
+  <div class="bottom-controls-mobile" id="bottom-controls-mobile">
+    <button class="mobile-tool-btn active" data-tool="select">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4L11 20L13 13L20 11L4 4Z"/></svg>
+      <span>选择</span>
+    </button>
+    <button class="mobile-tool-btn" data-tool="box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+      <span>方块</span>
+    </button>
+    <button class="mobile-tool-btn" data-tool="circle">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/></svg>
+      <span>圆球</span>
+    </button>
+    <button class="mobile-tool-btn" data-tool="ramp">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20L20 20L4 8Z"/></svg>
+      <span>斜面</span>
+    </button>
+    <button class="mobile-tool-btn" data-tool="platform">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="10" width="20" height="4" rx="1"/><line x1="5" y1="14" x2="5" y2="18" stroke-dasharray="2"/><line x1="19" y1="14" x2="19" y2="18" stroke-dasharray="2"/></svg>
+      <span>平台</span>
+    </button>
+    <div class="sep"></div>
+    <button class="mobile-tool-btn" data-tool="spring">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12 L7 6 L10 18 L13 6 L16 18 L19 6 L20 12" stroke-linecap="round"/></svg>
+      <span>弹簧</span>
+    </button>
+    <button class="mobile-tool-btn" data-tool="rod">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="20" x2="20" y2="4"/><circle cx="4" cy="20" r="2" fill="currentColor"/><circle cx="20" cy="4" r="2" fill="currentColor"/></svg>
+      <span>杆</span>
+    </button>
+    <button class="mobile-tool-btn" data-tool="ropechain">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2 C 8 8, 16 10, 12 16 C 8 22, 16 20, 12 22"/></svg>
+      <span>绳索</span>
+    </button>
+    <div class="sep"></div>
+    <button class="mobile-tool-btn" data-tool="delete">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0l-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
+      <span>删除</span>
+    </button>
+    <div class="sep"></div>
+    <button id="mobile-btn-settings" class="mobile-tool-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>设置</span>
+    </button>
+    <button id="mobile-btn-prop" class="mobile-tool-btn" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>属性</span>
+    </button>
+  </div>
+
+  <!-- 移动端属性面板 -->
+  <div id="mobile-prop-panel" class="z-30">
+    <div class="flex justify-between items-center mb-2">
+      <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:hsl(205,80%,70%);">物体属性</span>
+      <button id="mobile-prop-close" style="background:none;border:none;color:hsl(215,15%,60%);cursor:pointer;padding:4px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="prop-row">
+      <span class="label-sm">类型</span>
+      <span id="m-prop-type" class="value-mono">—</span>
+    </div>
+    <div class="prop-row">
+      <span class="label-sm">质量</span>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <input type="range" id="m-prop-mass-range" min="0.1" max="50" step="0.1" value="1" style="width:70px;">
+        <input type="number" id="m-prop-mass" step="0.1" min="0.1" style="width:55px;font-size:11px;padding:3px 5px;">
+      </div>
+    </div>
+    <div class="prop-row">
+      <span class="label-sm">摩擦</span>
+      <input type="number" id="m-prop-friction" step="0.01" min="0" max="2" style="width:55px;font-size:11px;padding:3px 5px;">
+    </div>
+    <div class="prop-row">
+      <span class="label-sm">弹性</span>
+      <input type="number" id="m-prop-restitution" step="0.01" min="0" max="1" style="width:55px;font-size:11px;padding:3px 5px;">
+    </div>
+    <div class="prop-row">
+      <span class="label-sm">静态</span>
+      <div id="m-prop-static" class="switch"></div>
+    </div>
+    <div class="prop-buttons">
+      <button id="m-btn-duplicate" class="ctrl-btn" style="padding:6px;font-size:10px;">复制</button>
+      <button id="m-btn-delete" class="ctrl-btn danger" style="padding:6px;font-size:10px;">删除</button>
+    </div>
+  </div>
+
+  <!-- 移动端设置面板 -->
+  <div id="mobile-settings-panel" class="z-30" style="display:none;position:fixed;left:50%;bottom:72px;transform:translateX(-50%);background:hsl(215,35%,12%,0.96);border:1px solid hsl(215,25%,24%);border-radius:12px;padding:12px;backdrop-filter:blur(10px);box-shadow:0 8px 32px hsla(215,50%,4%,0.6);width:280px;max-height:50vh;overflow-y:auto;">
+    <div class="flex justify-between items-center mb-3">
+      <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:hsl(205,80%,70%);">设置</span>
+      <button id="mobile-settings-close" style="background:none;border:none;color:hsl(215,15%,60%);cursor:pointer;padding:4px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span style="font-size:10px;color:hsl(215,15%,60%);font-weight:500;">重力</span>
+          <span id="m-gravity-val" class="value-mono" style="font-size:10px;">9.81 m/s²</span>
+        </div>
+        <input type="range" id="m-gravity-slider" min="0" max="30" step="0.1" value="9.81" style="width:100%;">
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span style="font-size:10px;color:hsl(215,15%,60%);font-weight:500;">时间流速</span>
+          <span id="m-timescale-val" class="value-mono" style="font-size:10px;">1.0x</span>
+        </div>
+        <input type="range" id="m-timescale-slider" min="0.1" max="3" step="0.1" value="1" style="width:100%;">
+      </div>
+      <div style="height:1px;background:hsl(215,25%,22%);"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:10px;color:hsl(215,15%,60%);font-weight:500;">FPS</span>
+        <span id="m-fps-val" class="value-mono" style="font-size:10px;">60</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:10px;color:hsl(215,15%,60%);font-weight:500;">物体数</span>
+        <span id="m-body-count" class="value-mono" style="font-size:10px;">0</span>
+      </div>
+      <div style="height:1px;background:hsl(215,25%,22%);"></div>
+      <div>
+        <span style="font-size:10px;color:hsl(215,15%,60%);font-weight:500;display:block;margin-bottom:4px;">受力显示</span>
+        <div id="m-force-filter-bar" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+      </div>
+    </div>
   </div>
 
   <!-- 右键菜单 -->
@@ -820,6 +1285,9 @@ function init() {
   // 画布尺寸
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('orientationchange', () => {
+    setTimeout(resizeCanvas, 300);
+  });
 
   // 相机初始居中
   state.camera.x = state.width / 2;
@@ -827,8 +1295,10 @@ function init() {
 
   // 交互
   setupInteraction();
+  setupTouch();
   setupPanelDrag();
   setupUI();
+  setupMobileUI();
   setupKeyboard();
 
   // 初始场景
@@ -870,6 +1340,11 @@ function resizeCanvas() {
   state.minimapCanvas.width = mm.clientWidth * dpr;
   state.minimapCanvas.height = mm.clientHeight * dpr;
   state.minimapCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // 移动端：切换显示隐藏对应面板
+  if (window.innerWidth <= 768) {
+    document.getElementById('mobile-prop-panel').style.display = 'none';
+  }
 }
 
 // ============================================================
@@ -1449,12 +1924,29 @@ function selectBody(body) {
   const panel = document.getElementById('prop-panel');
   panel.classList.remove('hidden-panel');
   updatePropertyPanel();
+
+  // 同步移动端
+  if (typeof window._mobileSelectBody === 'function') {
+    window._mobileSelectBody(body);
+  }
+  if (window.innerWidth <= 768 && body) {
+    updateMobilePropPanel();
+  }
 }
 
 function deselectBody() {
   state.selectedBody = null;
   const panel = document.getElementById('prop-panel');
   panel.classList.add('hidden-panel');
+
+  // 同步移动端
+  if (typeof window._mobileSelectBody === 'function') {
+    window._mobileSelectBody(null);
+  }
+  if (window.innerWidth <= 768) {
+    document.getElementById('mobile-prop-panel').style.display = 'none';
+    document.getElementById('mobile-btn-prop').style.display = 'none';
+  }
 }
 
 function updatePropertyPanel() {
@@ -1658,6 +2150,11 @@ function setTool(tool) {
   const btn = document.querySelector(`.tool-btn[data-tool="${tool}"]`);
   if (btn) btn.classList.add('active');
 
+  // 同步移动端工具栏
+  if (typeof window._setToolMobile === 'function') {
+    window._setToolMobile(tool);
+  }
+
   const wrap = document.getElementById('canvas-wrap');
   wrap.classList.remove('select-tool', 'create-tool');
   if (tool === 'select') wrap.classList.add('select-tool');
@@ -1691,6 +2188,514 @@ function resetView() {
 
 function updateZoomDisplay() {
   document.getElementById('zoom-val').textContent = Math.round(state.camera.zoom * 100) + '%';
+}
+
+// ============================================================
+//  移动端触摸交互
+// ============================================================
+let touchState = {
+  touches: [],
+  lastTouches: [],
+  pinchStartDist: 0,
+  pinchStartZoom: 1,
+  pinchStartCam: { x: 0, y: 0 },
+  longPressTimer: null,
+  longPressTriggered: false,
+  touchStartPos: null,
+  touchStartTime: 0,
+  isTouchPanning: false,
+  touchPanStart: { x: 0, y: 0 },
+  touchCamStart: { x: 0, y: 0 },
+};
+
+function setupTouch() {
+  const canvas = state.canvas;
+  const wrap = document.getElementById('canvas-wrap');
+
+  function getTouchPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    return {
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top
+    };
+  }
+
+  // 计算双指距离
+  function pinchDist(e) {
+    if (e.touches.length < 2) return 0;
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    return Math.hypot(dx, dy);
+  }
+
+  function clearLongPress() {
+    if (touchState.longPressTimer) {
+      clearTimeout(touchState.longPressTimer);
+      touchState.longPressTimer = null;
+    }
+    touchState.longPressTriggered = false;
+    document.getElementById('longpress-indicator').style.display = 'none';
+  }
+
+  // 触摸开始
+  canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    clearLongPress();
+
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    const screenPos = {
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top
+    };
+    const worldPos = screenToWorld(screenPos.x, screenPos.y);
+
+    if (e.touches.length === 1) {
+      // 单指：记录起始位置用于长按检测
+      touchState.touchStartPos = { x: touch.clientX, y: touch.clientY };
+      touchState.touchStartTime = Date.now();
+
+      // 检查是否在物体上
+      const body = getBodyAtWorld(worldPos.x, worldPos.y);
+
+      if (!body && state.currentTool === 'select') {
+        // 空白处：准备平移（单指平移视图模式）
+        touchState.isTouchPanning = true;
+        touchState.touchPanStart = screenPos;
+        touchState.touchCamStart = { x: state.camera.x, y: state.camera.y };
+        wrap.classList.add('panning');
+      } else if (body && state.currentTool === 'select') {
+        // 选中物体：开始拖拽
+        selectBody(body);
+        state.draggingBody = body;
+        state.dragOffset = {
+          x: worldPos.x - body.position.x,
+          y: worldPos.y - body.position.y
+        };
+        state.dragStartPos = { ...worldPos };
+        state.dragTarget = { x: body.position.x, y: body.position.y };
+        state.dragPrevTarget = { ...state.dragTarget };
+        state.hasMoved = false;
+        state.wasStatic = body.isStatic;
+        if (!body.isStatic) {
+          Body.setVelocity(body, { x: 0, y: 0 });
+          Body.setAngularVelocity(body, 0);
+          body.isStatic = true;
+        }
+      } else if (state.currentTool === 'delete') {
+        const body = getBodyAtWorld(worldPos.x, worldPos.y);
+        if (body) removeBody(body);
+      } else if (['box', 'circle', 'ramp', 'platform'].includes(state.currentTool)) {
+        state.createStart = worldPos;
+        state.createPreview = { type: state.currentTool, start: worldPos, end: worldPos };
+      } else if (['spring', 'rod', 'ropechain'].includes(state.currentTool)) {
+        const body = getBodyAtWorld(worldPos.x, worldPos.y);
+        if (body) {
+          state.constraintBodyA = body;
+          state.createStart = worldPos;
+          if (state.currentTool === 'ropechain') {
+            state.createPreview = { type: 'ropechain', start: worldPos, end: worldPos, bodies: [] };
+          } else {
+            state.createPreview = { type: state.currentTool, start: worldPos, end: worldPos };
+          }
+        }
+      }
+
+      // 长按检测（选择模式下，在物体上长按弹出菜单）
+      if (body && state.currentTool === 'select') {
+        touchState.longPressTriggered = false;
+        touchState.longPressTimer = setTimeout(() => {
+          if (state.draggingBody && !state.hasMoved) {
+            touchState.longPressTriggered = true;
+            // 显示长按指示器
+            const indicator = document.getElementById('longpress-indicator');
+            indicator.style.display = 'block';
+            indicator.style.left = touch.clientX + 'px';
+            indicator.style.top = touch.clientY + 'px';
+          }
+        }, 500);
+      }
+    } else if (e.touches.length === 2) {
+      // 双指：开始缩放
+      touchState.pinchStartDist = pinchDist(e);
+      touchState.pinchStartZoom = state.camera.zoom;
+      touchState.pinchStartCam = { x: state.camera.x, y: state.camera.y };
+      // 取消长按
+      clearLongPress();
+      // 取消拖拽
+      if (state.draggingBody) {
+        releaseDrag();
+      }
+      // 取消创建
+      state.createStart = null;
+      state.createPreview = null;
+      state.constraintBodyA = null;
+    }
+  }, { passive: false });
+
+  // 触摸移动
+  canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    const screenPos = {
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top
+    };
+    const worldPos = screenToWorld(screenPos.x, screenPos.y);
+
+    if (e.touches.length === 1) {
+      // 检查是否移动超过阈值（用于判断长按 vs 拖拽）
+      if (touchState.touchStartPos) {
+        const dx = touch.clientX - touchState.touchStartPos.x;
+        const dy = touch.clientY - touchState.touchStartPos.y;
+        if (Math.hypot(dx, dy) > 8) {
+          clearLongPress();
+        }
+      }
+
+      if (touchState.isTouchPanning) {
+        // 单指平移
+        state.camera.x = touchState.touchCamStart.x + (screenPos.x - touchState.touchPanStart.x);
+        state.camera.y = touchState.touchCamStart.y + (screenPos.y - touchState.touchPanStart.y);
+        return;
+      }
+
+      // 拖拽物体
+      if (state.draggingBody) {
+        state.dragPrevTarget = state.dragTarget
+          ? { ...state.dragTarget }
+          : { x: worldPos.x - state.dragOffset.x, y: worldPos.y - state.dragOffset.y };
+        state.dragTarget = {
+          x: worldPos.x - state.dragOffset.x,
+          y: worldPos.y - state.dragOffset.y
+        };
+        state.dragVelocity = {
+          x: state.dragTarget.x - (state.dragPrevTarget ? state.dragPrevTarget.x : state.dragTarget.x),
+          y: state.dragTarget.y - (state.dragPrevTarget ? state.dragPrevTarget.y : state.dragTarget.y)
+        };
+        const dist = Math.hypot(
+          state.dragTarget.x - state.dragStartPos.x,
+          state.dragTarget.y - state.dragStartPos.y
+        );
+        if (dist > 2) state.hasMoved = true;
+        return;
+      }
+
+      // 创建预览
+      if (state.createStart && state.createPreview) {
+        state.createPreview.end = worldPos;
+      }
+    } else if (e.touches.length === 2) {
+      // 双指缩放 + 平移
+      const dist = pinchDist(e);
+
+      // 缩放
+      if (touchState.pinchStartDist > 0) {
+        const scale = dist / touchState.pinchStartDist;
+        let newZoom = touchState.pinchStartZoom * scale;
+        newZoom = Math.max(0.2, Math.min(5, newZoom));
+        state.camera.zoom = newZoom;
+        updateZoomDisplay();
+      }
+
+      // 双指平移
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      const cx = (t1.clientX + t2.clientX) / 2 - rect.left;
+      const cy = (t1.clientY + t2.clientY) / 2 - rect.top;
+      if (touchState._pinchCenter) {
+        const dx = cx - touchState._pinchCenter.x;
+        const dy = cy - touchState._pinchCenter.y;
+        state.camera.x += dx;
+        state.camera.y += dy;
+      }
+      touchState._pinchCenter = { x: cx, y: cy };
+    }
+  }, { passive: false });
+
+  // 触摸结束
+  canvas.addEventListener('touchend', (e) => {
+    e.preventDefault();
+
+    if (touchState.longPressTriggered) {
+      // 长按触发：显示上下文菜单
+      if (state.selectedBody) {
+        const menu = document.getElementById('context-menu');
+        const touch = e.changedTouches[0];
+        menu.style.left = touch.clientX + 'px';
+        menu.style.top = touch.clientY + 'px';
+        menu.style.display = 'block';
+      }
+      clearLongPress();
+      if (state.draggingBody) {
+        releaseDrag();
+      }
+      return;
+    }
+
+    clearLongPress();
+
+    if (touchState.isTouchPanning) {
+      touchState.isTouchPanning = false;
+      wrap.classList.remove('panning');
+      touchState.touchStartPos = null;
+      return;
+    }
+
+    if (state.draggingBody) {
+      releaseDrag();
+      touchState.touchStartPos = null;
+      return;
+    }
+
+    if (state.createStart && state.createPreview) {
+      const touch = e.changedTouches[0];
+      const rect = canvas.getBoundingClientRect();
+      const screenPos = {
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top
+      };
+      const worldPos = screenToWorld(screenPos.x, screenPos.y);
+      finishCreate(worldPos);
+    }
+
+    touchState.touchStartPos = null;
+    touchState._pinchCenter = null;
+  }, { passive: false });
+
+  // 触摸取消
+  canvas.addEventListener('touchcancel', (e) => {
+    clearLongPress();
+    if (state.draggingBody) {
+      releaseDrag();
+    }
+    touchState.isTouchPanning = false;
+    wrap.classList.remove('panning');
+    state.createStart = null;
+    state.createPreview = null;
+    state.constraintBodyA = null;
+    touchState.touchStartPos = null;
+    touchState._pinchCenter = null;
+  });
+
+  // 阻止画布上的默认触摸行为（如滚动）
+  canvas.addEventListener('touchstart', (e) => {
+    if (e.target === canvas) e.preventDefault();
+  }, { passive: false });
+}
+
+// ============================================================
+//  移动端 UI
+// ============================================================
+function setupMobileUI() {
+  const isMobile = () => window.innerWidth <= 768;
+
+  // 移动端底部工具栏按钮
+  document.querySelectorAll('.bottom-controls-mobile .mobile-tool-btn[data-tool]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setTool(btn.dataset.tool);
+      // 如果选中物体且是选择工具，显示属性按钮
+      const propBtn = document.getElementById('mobile-btn-prop');
+      if (state.currentTool === 'select' && state.selectedBody) {
+        propBtn.style.display = 'flex';
+      } else {
+        propBtn.style.display = 'none';
+      }
+    });
+  });
+
+  // 同步桌面端工具切换状态到移动端
+  const origSetTool = setTool;
+  window._setToolMobile = (tool) => {
+    document.querySelectorAll('.bottom-controls-mobile .mobile-tool-btn[data-tool]').forEach(b => {
+      b.classList.toggle('active', b.dataset.tool === tool);
+    });
+    const propBtn = document.getElementById('mobile-btn-prop');
+    if (tool === 'select' && state.selectedBody) {
+      propBtn.style.display = 'flex';
+    } else {
+      propBtn.style.display = 'none';
+    }
+  };
+
+  // 属性面板控制（移动端）
+  const propBtn = document.getElementById('mobile-btn-prop');
+  const propPanel = document.getElementById('mobile-prop-panel');
+
+  propBtn.addEventListener('click', () => {
+    const isVisible = propPanel.style.display !== 'none';
+    propPanel.style.display = isVisible ? 'none' : 'block';
+    if (!isVisible && state.selectedBody) {
+      updateMobilePropPanel();
+    }
+  });
+
+  document.getElementById('mobile-prop-close').addEventListener('click', () => {
+    propPanel.style.display = 'none';
+  });
+
+  // 移动端属性面板控件
+  setupMobilePropertyPanel();
+
+  // 选中物体时显示属性按钮
+  const origSelectBody = selectBody;
+  window._mobileSelectBody = (body) => {
+    const propBtn = document.getElementById('mobile-btn-prop');
+    if (isMobile() && body) {
+      propBtn.style.display = 'flex';
+    } else if (isMobile()) {
+      propBtn.style.display = 'none';
+      document.getElementById('mobile-prop-panel').style.display = 'none';
+    }
+  };
+
+  // 移动端设置面板
+  const settingsBtn = document.getElementById('mobile-btn-settings');
+  const settingsPanel = document.getElementById('mobile-settings-panel');
+  const settingsClose = document.getElementById('mobile-settings-close');
+
+  settingsBtn.addEventListener('click', () => {
+    const isVisible = settingsPanel.style.display !== 'none';
+    settingsPanel.style.display = isVisible ? 'none' : 'block';
+    if (!isVisible) {
+      // 同步当前值
+      document.getElementById('m-gravity-slider').value = (state.engine.gravity.y * 9.81).toFixed(2);
+      document.getElementById('m-gravity-val').textContent = (state.engine.gravity.y * 9.81).toFixed(2) + ' m/s²';
+      document.getElementById('m-timescale-slider').value = state.timeScale;
+      document.getElementById('m-timescale-val').textContent = state.timeScale.toFixed(1) + 'x';
+      document.getElementById('m-fps-val').textContent = state.fps;
+      document.getElementById('m-body-count').textContent = document.getElementById('body-count').textContent;
+      // 同步受力过滤器
+      setupMobileForceFilters();
+    }
+  });
+
+  settingsClose.addEventListener('click', () => {
+    settingsPanel.style.display = 'none';
+  });
+
+  // 移动端重力滑块
+  document.getElementById('m-gravity-slider').addEventListener('input', (e) => {
+    const g = parseFloat(e.target.value);
+    state.engine.gravity.y = g / 9.81;
+    document.getElementById('m-gravity-val').textContent = g.toFixed(2) + ' m/s²';
+    // 同步桌面端
+    document.getElementById('gravity-slider').value = g;
+    document.getElementById('gravity-val').textContent = g.toFixed(2) + ' m/s²';
+  });
+
+  // 移动端时间流速滑块
+  document.getElementById('m-timescale-slider').addEventListener('input', (e) => {
+    state.timeScale = parseFloat(e.target.value);
+    document.getElementById('m-timescale-val').textContent = state.timeScale.toFixed(1) + 'x';
+    // 同步桌面端
+    document.getElementById('timescale-slider').value = state.timeScale;
+    document.getElementById('timescale-val').textContent = state.timeScale.toFixed(1) + 'x';
+  });
+
+  // 窗口 resize 处理
+  window.addEventListener('resize', () => {
+    if (isMobile()) {
+      document.getElementById('mobile-prop-panel').style.display = 'none';
+      document.getElementById('mobile-settings-panel').style.display = 'none';
+    }
+  });
+}
+
+function setupMobileForceFilters() {
+  const filterBar = document.getElementById('m-force-filter-bar');
+  filterBar.innerHTML = '';
+  Object.keys(FORCE_TYPES).forEach(key => {
+    const ft = FORCE_TYPES[key];
+    const btn = document.createElement('button');
+    btn.dataset.forceType = key;
+    btn.innerHTML = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${ft.color};vertical-align:middle;margin-right:3px;"></span>${ft.label}`;
+    btn.style.cssText = `
+      display:inline-flex; align-items:center; gap:3px;
+      padding:2px 6px; font-size:9px; font-weight:500;
+      background:${state.forceFilters[key] ? 'hsla(205,90%,58%,0.15)' : 'hsla(215,25%,22%,0.5)'};
+      border:1px solid ${state.forceFilters[key] ? 'hsl(205,90%,58%)' : 'hsl(215,25%,28%)'};
+      border-radius:5px; color:${state.forceFilters[key] ? 'hsl(205,90%,80%)' : 'hsl(215,15%,55%)'};
+      cursor:pointer; transition:all 0.15s;
+      font-family:'Inter',system-ui,sans-serif;
+    `;
+    btn.addEventListener('click', () => {
+      state.forceFilters[key] = !state.forceFilters[key];
+      btn.style.background = state.forceFilters[key] ? 'hsla(205,90%,58%,0.15)' : 'hsla(215,25%,22%,0.5)';
+      btn.style.borderColor = state.forceFilters[key] ? 'hsl(205,90%,58%)' : 'hsl(215,25%,28%)';
+      btn.style.color = state.forceFilters[key] ? 'hsl(205,90%,80%)' : 'hsl(215,15%,55%)';
+      // 同步桌面端
+      const desktopBtns = document.querySelectorAll('.force-filter-btn');
+      desktopBtns.forEach(dbtn => {
+        if (dbtn.dataset.forceType === key) {
+          dbtn.style.background = state.forceFilters[key] ? 'hsla(205,90%,58%,0.15)' : 'hsla(215,25%,22%,0.5)';
+          dbtn.style.borderColor = state.forceFilters[key] ? 'hsl(205,90%,58%)' : 'hsl(215,25%,28%)';
+          dbtn.style.color = state.forceFilters[key] ? 'hsl(205,90%,80%)' : 'hsl(215,15%,55%)';
+        }
+      });
+    });
+    filterBar.appendChild(btn);
+  });
+}
+
+function setupMobilePropertyPanel() {
+  const b = () => state.selectedBody;
+
+  document.getElementById('m-prop-mass').addEventListener('change', (e) => {
+    if (b()) Body.setMass(b(), parseFloat(e.target.value) || 1);
+    updateMobilePropPanel();
+  });
+  document.getElementById('m-prop-mass-range').addEventListener('input', (e) => {
+    if (b()) {
+      Body.setMass(b(), parseFloat(e.target.value));
+      document.getElementById('m-prop-mass').value = b().mass.toFixed(2);
+    }
+  });
+
+  document.getElementById('m-prop-friction').addEventListener('change', (e) => {
+    if (b()) b().friction = parseFloat(e.target.value) || 0;
+    updateMobilePropPanel();
+  });
+
+  document.getElementById('m-prop-restitution').addEventListener('change', (e) => {
+    if (b()) b().restitution = parseFloat(e.target.value) || 0;
+    updateMobilePropPanel();
+  });
+
+  document.getElementById('m-prop-static').addEventListener('click', function() {
+    if (b()) {
+      Body.setStatic(b(), !b().isStatic);
+      this.classList.toggle('on');
+    }
+  });
+
+  document.getElementById('m-btn-duplicate').addEventListener('click', () => {
+    if (b()) duplicateBody(b());
+  });
+  document.getElementById('m-btn-delete').addEventListener('click', () => {
+    if (b()) {
+      removeBody(b());
+      document.getElementById('mobile-prop-panel').style.display = 'none';
+      document.getElementById('mobile-btn-prop').style.display = 'none';
+    }
+  });
+}
+
+function updateMobilePropPanel() {
+  const b = state.selectedBody;
+  if (!b) return;
+
+  document.getElementById('m-prop-type').textContent = b.label || 'body';
+  document.getElementById('m-prop-mass').value = b.mass.toFixed(2);
+  document.getElementById('m-prop-mass-range').value = Math.min(b.mass, 50);
+  document.getElementById('m-prop-friction').value = b.friction.toFixed(2);
+  document.getElementById('m-prop-restitution').value = b.restitution.toFixed(2);
+
+  const sw = document.getElementById('m-prop-static');
+  if (b.isStatic) sw.classList.add('on'); else sw.classList.remove('on');
 }
 
 // ============================================================
@@ -1874,7 +2879,6 @@ function releaseDrag() {
     // 不从零开始给速度——靠重力自然下落，物体会缓慢分离
     Body.setVelocity(body, { x: 0, y: 0 });
     Body.setAngularVelocity(body, 0);
-    Body.setSleeping(body, false);
   }
 }
 
@@ -1921,6 +2925,12 @@ function loop(now) {
     document.getElementById('fps-val').textContent = state.fps;
     state.frameCount = 0;
     state.lastFpsTime = now;
+
+    // 同步移动端
+    const mFps = document.getElementById('m-fps-val');
+    if (mFps) mFps.textContent = state.fps;
+    const mCount = document.getElementById('m-body-count');
+    if (mCount) mCount.textContent = document.getElementById('body-count').textContent;
   }
 
   render();
